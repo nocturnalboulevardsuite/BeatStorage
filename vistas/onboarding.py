@@ -14,14 +14,13 @@ import streamlit as st
 
 import core
 import db
-from components import encabezado, ir_a
+from components import encabezado, ir_a, lista_iconos
 from config import AREAS_IA, CARPETAS, DAWS, MIN_BEATS_PRODUCTOR
 
 
 def render(usuario: dict) -> None:
     encabezado("Verificación de productor",
-               "Comprobamos que detrás de cada catálogo hay una persona creando. "
-               "Así los artistas saben con quién trabajan.", semilla=55)
+               "Confirmamos que detrás de cada catálogo hay una persona.", semilla=55)
 
     ob = core.onboarding_de(usuario["id"])
     n_beats = core.beats_publicos(usuario["id"])
@@ -34,12 +33,9 @@ def render(usuario: dict) -> None:
         (f"{MIN_BEATS_PRODUCTOR} beats completos subidos ({n_beats}/{MIN_BEATS_PRODUCTOR})",
          n_beats >= MIN_BEATS_PRODUCTOR),
     ]
-    for texto, ok in pasos:
-        st.markdown(f"{'✅' if ok else '⬜'} {texto}")
-    st.progress(min(1.0, n_beats / MIN_BEATS_PRODUCTOR),
-                text=f"Beats subidos: {n_beats} de {MIN_BEATS_PRODUCTOR}")
+    lista_iconos([("circulo_ok" if ok else "circulo", texto, "") for texto, ok in pasos])
     if n_beats < MIN_BEATS_PRODUCTOR:
-        st.button("Subir beats en Mi panel", on_click=ir_a, args=("🧭 Mi panel",))
+        st.button("Subir beats", icon=":material/upload:", on_click=ir_a, args=("panel",))
 
     if usuario["estado"] == "activo":
         st.success("Tu perfil es público y puedes postular al tablón de encargos.")

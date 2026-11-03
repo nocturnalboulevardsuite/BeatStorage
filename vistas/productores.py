@@ -109,7 +109,7 @@ def perfil_publico(pid: int, usuario: dict | None) -> None:
         for r in resenas:
             with st.container(border=True):
                 st.markdown(
-                    f'<b>{"★" * r["calificacion"]}{"☆" * (5 - r["calificacion"])}</b> '
+                    f'<b style="color:var(--bs-acento-t)">{"★" * r["calificacion"]}{"☆" * (5 - r["calificacion"])}</b> '
                     f'<span class="bs-badge neutro">Compra verificada</span>{insignias(r)}'
                     f'<div class="bs-texto">{esc(r["comentario"] or "")}</div>'
                     f'<div class="bs-autor">@{esc(r["username"])}, {esc(r["descripcion"])}, '

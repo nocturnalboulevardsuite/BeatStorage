@@ -32,9 +32,8 @@ def _presupuesto(e: dict) -> str:
 
 
 def render(usuario: dict | None) -> None:
-    encabezado("Tablón de encargos",
-               "Describe el beat o servicio que necesitas y recibe propuestas de productores "
-               "verificados. Tienes 7 días para responder desde la primera propuesta.",
+    encabezado("Encargos",
+               "Cuenta lo que necesitas y recibe propuestas de productores verificados.",
                semilla=33)
 
     rol = usuario["rol"] if usuario else None
@@ -133,9 +132,6 @@ def _publicar(usuario: dict) -> None:
         st.error("Tu cuenta tiene un aviso formal de suspensión por no responder propuestas "
                  "a tiempo. No puedes publicar encargos mientras está en revisión.")
         return
-    if not usuario["verificado"]:
-        st.info("Tip: con la membresía Comprador Real tu encargo muestra una insignia de cliente "
-                "verificado y los productores responden con más confianza.")
     with st.form("nuevo_encargo", clear_on_submit=False):
         titulo = st.text_input("Título", placeholder="Beat synthwave estilo 80s para single")
         descripcion = st.text_area("Descripción técnica", max_chars=1500,
@@ -148,9 +144,10 @@ def _publicar(usuario: dict) -> None:
         c3, c4 = st.columns([2, 1])
         monto = c3.number_input("Presupuesto", min_value=1.0, value=60000.0, step=1000.0)
         moneda = c4.selectbox("Moneda", ["CLP", "USD"])
-        acepto = st.checkbox(f"Entiendo que, al recibir propuestas, tengo {DIAS_INACTIVIDAD} días para "
-                             "elegir un productor o cerrar el encargo. Si no respondo, mi cuenta "
-                             "recibirá un aviso formal de suspensión permanente.")
+        acepto = st.checkbox(f"Responderé las propuestas en {DIAS_INACTIVIDAD} días",
+                             help="Si recibes propuestas y no eliges ni cierras el encargo en "
+                                  f"{DIAS_INACTIVIDAD} días, tu cuenta recibe un aviso formal de "
+                                  "suspensión permanente.")
         if st.form_submit_button("Publicar encargo", type="primary"):
             if len(titulo.strip()) < 5 or len(descripcion.strip()) < 20:
                 st.error("Agrega un título (mín. 5 caracteres) y una descripción (mín. 20).")
@@ -210,7 +207,7 @@ def _propuesta_cliente(e: dict, p: dict, usuario: dict) -> None:
                     f'<div class="bs-autor">{_monto(p["moneda"], p["precio"])}, entrega en '
                     f'{p["plazo_dias"]} días</div>', unsafe_allow_html=True)
         c2.button("Ver perfil", key=f"vp_{p['id']}", on_click=ir_a,
-                  args=("🎧 Productores",), kwargs={"perfil_id": p["productor_id"]})
+                  args=("productores",), kwargs={"perfil_id": p["productor_id"]})
         if e["estado"] == "abierto":
             if c2.button("Elegir", key=f"sel_{p['id']}", type="primary"):
                 pedido = core.crear_pedido(usuario["id"], p["productor_id"], "encargo", e["id"],

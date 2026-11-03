@@ -14,39 +14,38 @@ import streamlit as st
 import audio
 import core
 import db
-from components import avatar, esc, insignias, ir_a
+from components import avatar, esc, icono, insignias, ir_a
 from config import (ADMIN_EMAIL, ADMIN_WHATSAPP, CARPETAS, DATOS_TRANSFERENCIA,
                     FORMATOS_ESTANDAR, FORMATOS_VERIFICADO, GENEROS, MIN_BEATS_PRODUCTOR,
                     NOMBRE_MEMBRESIA, PAISES, PRECIO_BEAT_PERSONALIZADO,
                     PRECIO_BEAT_SUGERIDO, TARIFAS, TIPOS_SERVICIO_VOZ, TONALIDADES)
 
-ICONO_NOTIF = {"info": "🔔", "exito": "✅", "alerta": "⚠️", "critica": "⛔"}
+ICONO_NOTIF = {"info": "campana", "exito": "circulo_ok", "alerta": "alerta", "critica": "bloqueo"}
 
 
 def render(usuario: dict) -> None:
-    c1, c2 = st.columns([1, 6])
+    c1, c2 = st.columns([1, 9], vertical_alignment="center")
     with c1:
-        avatar(usuario, 72)
+        avatar(usuario, 60)
     with c2:
-        st.markdown(f"## Hola, {esc(usuario['nombre_publico'] or usuario['username'])}")
-        st.markdown(f'<span class="bs-badge neutro">{usuario["rol"].capitalize()}</span>'
+        st.markdown(f'<h2 style="margin:0;padding:0">{esc(usuario["nombre_publico"] or usuario["username"])}</h2>'
                     f'{insignias(usuario)}', unsafe_allow_html=True)
 
     if usuario["estado"] == "aviso_suspension":
-        st.error("⛔ AVISO FORMAL DE SUSPENSIÓN: recibiste propuestas en el tablón y no respondiste "
+        st.error("Aviso formal de suspensión: recibiste propuestas en el tablón y no respondiste "
                  "dentro de 7 días. Tu cuenta está en revisión para suspensión permanente por "
                  "irresponsabilidad comercial. Mientras dure la revisión no puedes publicar encargos "
                  f"ni hacer pedidos. Si hubo un error, escribe a {ADMIN_EMAIL}.")
     if usuario["rol"] == "productor" and usuario["estado"] == "pendiente_verificacion":
-        st.warning("Tu perfil aún no es público. Completa la verificación de productor.")
-        st.button("Ir a verificación", on_click=ir_a, args=("🛡️ Verificación de productor",))
+        st.button("Completa tu verificación para aparecer en el catálogo", type="tertiary",
+                  icon=":material/verified_user:", on_click=ir_a, args=("verificacion",))
 
     n = core.no_leidas(usuario["id"])
     if usuario["rol"] == "productor":
-        nombres = [f"Notificaciones ({n})", "Mi estudio", "Pedidos recibidos",
+        nombres = [(f"Avisos ({n})" if n else "Avisos"), "Mi estudio", "Pedidos",
                    "Productor Real", "Perfil"]
     else:
-        nombres = [f"Notificaciones ({n})", "Mis pedidos", "Reseñas", "Comprador Real", "Perfil"]
+        nombres = [(f"Avisos ({n})" if n else "Avisos"), "Mis pedidos", "Reseñas", "Comprador Real", "Perfil"]
     t = st.tabs(nombres)
 
     with t[0]:
@@ -76,14 +75,13 @@ def _notificaciones(usuario: dict) -> None:
     if not notifs:
         st.caption("Sin notificaciones.")
         return
-    if st.button("Marcar todas como leídas"):
+    if st.button("Marcar como leídas", icon=":material/done_all:", type="tertiary"):
         db.ejecutar("UPDATE notificaciones SET leida=1 WHERE usuario_id=?", (usuario["id"],))
         st.rerun()
-    for nt in notifs:
-        peso = "" if nt["leida"] else "**"
-        st.markdown(f"{ICONO_NOTIF[nt['tipo']]} {peso}{nt['mensaje']}{peso}  \n"
-                    f"<small style='opacity:.6'>{core.hace(nt['fecha'])}</small>",
-                    unsafe_allow_html=True)
+    st.markdown("".join(
+        f'<div class="bs-item{" leido" if nt["leida"] else ""}">{icono(ICONO_NOTIF[nt["tipo"]])}'
+        f'<div>{esc(nt["mensaje"])}<small>{core.hace(nt["fecha"])}</small></div></div>'
+        for nt in notifs), unsafe_allow_html=True)
 
 
 # ----------------------------------------------------------------------------

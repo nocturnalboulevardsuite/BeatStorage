@@ -11,35 +11,25 @@ import streamlit as st
 import core
 import db
 from components import encabezado, tarjeta_beat
-from config import APP_LEMA, CATALOGO_POR_PAGINA, GENEROS
+from config import CATALOGO_POR_PAGINA, GENEROS
 
 
 def render(usuario: dict | None) -> None:
-    s = db.uno("""
-        SELECT
-          (SELECT COUNT(*) FROM beats b JOIN usuarios u ON u.id=b.productor_id
-            WHERE b.es_exclusivo=0 AND b.retirado=0 AND u.estado='activo')                       AS beats,
-          (SELECT COUNT(*) FROM usuarios WHERE rol='productor' AND estado='activo') AS productores,
-          (SELECT COUNT(DISTINCT pais) FROM usuarios WHERE rol='productor' AND estado='activo') AS paises
-    """)
-    encabezado("BeatStorage LATAM", APP_LEMA,
-               cifras=[("beats en catálogo", s["beats"]),
-                       ("productores verificados por autoría", s["productores"]),
-                       ("países", s["paises"])])
+    encabezado("BeatStorage LATAM", "Beats y voces hechas por personas de Latinoamérica.")
 
-    # ---- Filtros ----------------------------------------------------------
+    # ---- Filtros: búsqueda y género a la vista; el resto, dentro de "Filtros" ----
     paises = [p["pais"] for p in db.todos(
         "SELECT DISTINCT pais FROM usuarios WHERE rol='productor' AND estado='activo' "
         "AND pais IS NOT NULL ORDER BY pais")]
-    c1, c2, c3 = st.columns([2.2, 1.4, 1.4])
-    texto = c1.text_input("Buscar", placeholder="Título o productor", label_visibility="collapsed")
+    c1, c2, c3 = st.columns([3, 1.6, 1], vertical_alignment="bottom")
+    texto = c1.text_input("Buscar", placeholder="Buscar beat o productor",
+                          label_visibility="collapsed", icon=":material/search:")
     genero = c2.selectbox("Género", ["Todos los géneros"] + GENEROS, label_visibility="collapsed")
-    pais = c3.selectbox("País", ["Toda Latinoamérica"] + paises, label_visibility="collapsed")
-    c4, c5, c6 = st.columns([2.2, 1.4, 1.4])
-    precio = c4.slider("Precio (US$)", 0, 200, (0, 200))
-    orden = c5.selectbox("Ordenar por", ["Recientes", "Más escuchados", "Menor precio"])
-    solo_humanos = c6.toggle("Solo Productor Real",
-                             help="Muestra solo productores con insignia de autoría humana")
+    with c3.popover("Filtros", icon=":material/tune:", width="stretch"):
+        pais = st.selectbox("País", ["Toda Latinoamérica"] + paises)
+        precio = st.slider("Precio (US$)", 0, 200, (0, 200))
+        orden = st.selectbox("Ordenar por", ["Recientes", "Más escuchados", "Menor precio"])
+        solo_humanos = st.toggle("Solo Productor Real")
 
     # Si cambia cualquier filtro, la lista vuelve a la primera página
     firma = (texto, genero, pais, precio, orden, solo_humanos)
@@ -72,16 +62,16 @@ def render(usuario: dict | None) -> None:
     beats = db.todos(sql, tuple(params + [limite]))
 
     if not beats:
-        st.info("No hay beats con esos filtros. Prueba con otro género, otro país o amplía el rango de precio.")
+        st.caption("Sin resultados. Prueba con otros filtros.")
         return
 
-    st.caption(f"Mostrando {len(beats)} de {total} beats. Los productores con insignia humana aparecen primero.")
+    st.caption(f"{total} beats")
     columnas = st.columns(3)
     for i, b in enumerate(beats):
         with columnas[i % 3]:
             tarjeta_beat(b, usuario, prefijo="cat")
 
     if total > len(beats):
-        if st.button(f"Cargar {min(CATALOGO_POR_PAGINA, total - len(beats))} beats más", width="stretch"):
+        if st.button("Ver más", icon=":material/expand_more:", width="stretch"):
             st.session_state["cat_limite"] = limite + CATALOGO_POR_PAGINA
             st.rerun()
