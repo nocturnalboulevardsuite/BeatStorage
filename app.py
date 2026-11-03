@@ -34,7 +34,10 @@ try:
     from config import PAISES  # noqa: E402
     from vistas import (admin, catalogo, licitaciones, onboarding, panel,  # noqa: E402
                         productores, servicios)
-    styles.paleta  # solo existe en la versión 3 de styles.py
+    # Ojo: una expresión suelta (p. ej. "styles.paleta") la dibuja Streamlit en pantalla
+    # por su función "magic"; por eso se comprueba con hasattr y no con una línea suelta.
+    if not hasattr(styles, "paleta"):
+        raise AttributeError("styles.py es de una versión anterior")
 except (ImportError, AttributeError) as error:
     st.error("Hay archivos de una versión anterior mezclados con este app.py. Sube **todos** los "
              "archivos de la versión 3 (components.py, styles.py, la carpeta vistas/ y "
@@ -87,32 +90,59 @@ def etiqueta(pagina: str) -> str:
 
 
 # ----------------------------------------------------------------------------
-# 3. Barra lateral
+# 3. Barra lateral: logo arriba, debajo la sesión (iniciar sesión / registrarse)
+#    y al final la navegación.
 # ----------------------------------------------------------------------------
-def bloque_sesion(usuario: dict | None) -> None:
-    if usuario:
-        nombre = esc(usuario["nombre_publico"] or usuario["username"])
-        st.markdown(f'<div class="bs-usuario"><b>{nombre}</b><br><small>@{esc(usuario["username"])}'
-                    f'</small></div>{insignias(usuario)}', unsafe_allow_html=True)
-        n = core.no_leidas(usuario["id"])
-        if n:
-            st.markdown(f'<div class="bs-nota">{icono("campana")} {n} sin leer</div>',
-                        unsafe_allow_html=True)
-        if usuario["estado"] == "aviso_suspension":
-            st.markdown(f'<div class="bs-nota" style="color:var(--bs-peligro)">{icono("alerta")} '
-                        'Cuenta en revisión</div>', unsafe_allow_html=True)
-        st.write("")
-        if st.button("Cerrar sesión", icon=":material/logout:", type="tertiary"):
-            auth.cerrar_sesion()
-            st.rerun()
-        return
+# Isotipo: una "caja" redondeada que guarda una forma de onda (beats almacenados).
+LOGO_SVG = """
+<svg class="bs-isotipo" viewBox="0 0 40 40" role="img" aria-label="BeatStorage LATAM">
+  <rect width="40" height="40" rx="11" fill="var(--bs-acento)"/>
+  <g fill="#fff">
+    <rect x="8.5"  y="17" width="3" height="6"  rx="1.5"/>
+    <rect x="14"   y="12" width="3" height="16" rx="1.5"/>
+    <rect x="19.5" y="8"  width="3" height="24" rx="1.5"/>
+    <rect x="25"   y="13" width="3" height="14" rx="1.5"/>
+    <rect x="30.5" y="16.5" width="3" height="7" rx="1.5"/>
+  </g>
+</svg>
+"""
 
-    ingresar, registrarse = st.tabs(["Ingresar", "Crear cuenta"])
+
+def logo() -> None:
+    st.markdown(f'<div class="bs-marca">{LOGO_SVG}<div class="bs-marca-texto">'
+                '<span class="bs-marca-nombre">BeatStorage</span>'
+                '<span class="bs-marca-region">LATAM</span></div></div>',
+                unsafe_allow_html=True)
+
+
+def bloque_usuario(usuario: dict) -> None:
+    """Tarjeta compacta del usuario conectado."""
+    nombre = esc(usuario["nombre_publico"] or usuario["username"])
+    inicial = esc((usuario["nombre_publico"] or usuario["username"])[:1].upper())
+    avisos = ""
+    n = core.no_leidas(usuario["id"])
+    if n:
+        avisos = f'<div class="bs-nota">{icono("campana")} {n} sin leer</div>'
+    if usuario["estado"] == "aviso_suspension":
+        avisos += (f'<div class="bs-nota" style="color:var(--bs-peligro)">{icono("alerta")} '
+                   'Cuenta en revisión</div>')
+    st.markdown(
+        f'<div class="bs-cuenta"><div class="bs-cuenta-avatar">{inicial}</div>'
+        f'<div class="bs-cuenta-datos"><b>{nombre}</b><small>@{esc(usuario["username"])}</small></div></div>'
+        f'<div class="bs-cuenta-extra">{insignias(usuario)}{avisos}</div>',
+        unsafe_allow_html=True)
+
+
+def bloque_acceso() -> None:
+    """Iniciar sesión / Registrarse para visitantes."""
+    st.markdown('<p class="bs-acceso-texto">Entra para comprar beats, publicar encargos '
+                'o vender tu música.</p>', unsafe_allow_html=True)
+    ingresar, registrarse = st.tabs(["Iniciar sesión", "Registrarse"])
     with ingresar:
         with st.form("login", border=False):
             u = st.text_input("Usuario o correo")
             p = st.text_input("Contraseña", type="password")
-            if st.form_submit_button("Ingresar", type="primary", width="stretch"):
+            if st.form_submit_button("Iniciar sesión", type="primary", width="stretch"):
                 encontrado, error = auth.autenticar(u, p)
                 if encontrado:
                     st.session_state["uid"] = encontrado["id"]
@@ -126,7 +156,8 @@ def bloque_sesion(usuario: dict | None) -> None:
         with st.form("registro", border=False):
             rol = st.segmented_control("Quiero", ["cliente", "productor"], default="cliente",
                                        format_func={"cliente": "Comprar",
-                                                    "productor": "Vender beats"}.get)
+                                                    "productor": "Vender beats"}.get,
+                                       width="stretch")
             username = st.text_input("Usuario")
             email = st.text_input("Correo")
             pais = st.selectbox("País", PAISES)
@@ -148,12 +179,19 @@ if st.session_state.get("nav") not in opciones:
     st.session_state["nav"] = opciones[0]
 
 with st.sidebar:
-    st.markdown('<div class="bs-logo">BeatStorage <span>LATAM</span></div>', unsafe_allow_html=True)
-    st.write("")
+    logo()
+    if usuario:
+        bloque_usuario(usuario)
+    else:
+        bloque_acceso()
+    st.divider()
     pagina = st.radio("Navegación", opciones, key="nav", format_func=etiqueta,
                       label_visibility="collapsed")
-    st.divider()
-    bloque_sesion(usuario)
+    if usuario:
+        st.divider()
+        if st.button("Cerrar sesión", icon=":material/logout:", type="tertiary"):
+            auth.cerrar_sesion()
+            st.rerun()
 
 # ----------------------------------------------------------------------------
 # 4. Vista seleccionada
