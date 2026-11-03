@@ -90,7 +90,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-a
 .bs-titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 1.08rem; line-height: 1.2; margin: 0; }
 .bs-autor  { font-size: .84rem; color: var(--bs-tenue); margin: 2px 0 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bs-meta   { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--bs-tenue); margin: 2px 0 4px; }
-.bs-precio { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.25rem; font-weight: 600; margin: 0; white-space: nowrap; }
+.bs-precio { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(1.05rem, 2.2vw, 1.25rem); font-weight: 600; margin: 0; white-space: nowrap; }
 .bs-texto  { font-size: .92rem; color: var(--bs-texto); opacity: .85; line-height: 1.55; max-width: 70ch; margin: 4px 0; }
 .bs-nota   { font-size: .8rem; color: var(--bs-tenue); display: flex; align-items: center; gap: 6px; }
 
@@ -116,11 +116,40 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-a
 .bs-plan b.monto { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.6rem; display: block; margin: 4px 0; }
 .bs-plan small { color: var(--bs-tenue); }
 
-/* ---------- Barra lateral ---------- */
-.bs-logo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.3rem; line-height: 1; }
-.bs-logo span { color: var(--bs-acento-t); }
-.bs-usuario { font-size: .9rem; margin-bottom: 6px; }
-.bs-usuario small { color: var(--bs-tenue); }
+/* ---------- Barra lateral: logo, cuenta y acceso ---------- */
+[data-testid="stSidebarContent"] { padding-top: .2rem; }
+[data-testid="stSidebarUserContent"] { padding-top: 1.2rem; }
+.bs-marca { display: flex; align-items: center; gap: 12px; margin: 0 0 1.4rem; min-width: 0; }
+.bs-isotipo { width: 42px; height: 42px; flex: none; }
+.bs-marca-texto { display: flex; flex-direction: column; min-width: 0; line-height: 1; }
+.bs-marca-nombre {
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', sans-serif; font-weight: 800;
+  font-size: 1.32rem; letter-spacing: -0.03em; color: var(--bs-texto);
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+}
+.bs-marca-region {
+  font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .78rem;
+  color: var(--bs-acento-t); margin-top: 4px;
+}
+.bs-acceso-texto { font-size: .86rem; line-height: 1.45; color: var(--bs-tenue); margin: 0 0 .4rem; }
+.bs-cuenta { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bs-cuenta-avatar {
+  width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--bs-acento-s);
+  color: var(--bs-acento-t); display: flex; align-items: center; justify-content: center;
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+}
+.bs-cuenta-datos { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.bs-cuenta-datos b, .bs-cuenta-datos small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-cuenta-datos small { color: var(--bs-tenue); font-size: .78rem; }
+.bs-cuenta-extra { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+[data-testid="stSidebar"] [data-testid="stTabs"] button p { font-size: .9rem; }
+[data-testid="stSidebar"] hr { margin: 1rem 0; }
+
+/* ---------- Ajuste del texto: que nada se corte ni desborde ---------- */
+h1, h2, h3 { text-wrap: balance; overflow-wrap: break-word; }
+.bs-titulo { overflow-wrap: anywhere; }
+.bs-texto, .bs-item { overflow-wrap: break-word; }
+.bs-autor .bs-badge { margin: 0; }
 
 /* ---------- Botones ---------- */
 .stButton > button, .stDownloadButton > button, .stLinkButton > a, [data-testid="stPopover"] button {
