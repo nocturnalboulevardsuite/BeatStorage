@@ -15,14 +15,31 @@ import streamlit as st
 st.set_page_config(page_title="BeatStorage LATAM", page_icon=":material/graphic_eq:",
                    layout="wide", initial_sidebar_state="auto")
 
-import auth  # noqa: E402  (después de set_page_config)
-import core  # noqa: E402
-import db  # noqa: E402
-import styles  # noqa: E402
-from components import esc, icono, insignias  # noqa: E402
-from config import PAISES  # noqa: E402
-from vistas import (admin, catalogo, licitaciones, onboarding, panel,  # noqa: E402
-                    productores, servicios)
+# ----------------------------------------------------------------------------
+# 0. Comprobaciones de instalación (mensajes claros en vez de errores crípticos)
+# ----------------------------------------------------------------------------
+VERSION_MINIMA = (1, 55)
+if tuple(int(x) for x in st.__version__.split(".")[:2]) < VERSION_MINIMA:
+    st.error(f"Esta app necesita Streamlit {VERSION_MINIMA[0]}.{VERSION_MINIMA[1]} o superior "
+             f"(tienes {st.__version__}). Revisa que requirements.txt diga streamlit>=1.55 "
+             "y reinicia la app.")
+    st.stop()
+
+try:
+    import auth  # noqa: E402  (después de set_page_config)
+    import core  # noqa: E402
+    import db  # noqa: E402
+    import styles  # noqa: E402
+    from components import esc, icono, insignias  # noqa: E402
+    from config import PAISES  # noqa: E402
+    from vistas import (admin, catalogo, licitaciones, onboarding, panel,  # noqa: E402
+                        productores, servicios)
+    styles.paleta  # solo existe en la versión 3 de styles.py
+except (ImportError, AttributeError) as error:
+    st.error("Hay archivos de una versión anterior mezclados con este app.py. Sube **todos** los "
+             "archivos de la versión 3 (components.py, styles.py, la carpeta vistas/ y "
+             f".streamlit/config.toml), no solo app.py.\n\nDetalle: `{error}`")
+    st.stop()
 
 
 # ----------------------------------------------------------------------------

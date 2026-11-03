@@ -1,32 +1,50 @@
 """
 styles.py — Identidad visual de BeatStorage LATAM.
 
-Decisiones de diseño:
-  · Tipografía: Bricolage Grotesque (titulares, con carácter de afiche de tocata)
-    + Instrument Sans (texto, muy legible en pantallas pequeñas).
-  · Color: magenta "cumbia" (#D63A78) como acento principal y azul "cassette"
-    (#2F6FE4) como secundario; verde-azulado para la insignia humana y ámbar para IA.
-  · Superficies semitransparentes (rgba gris): el mismo CSS funciona sobre el
-    tema claro y el oscuro de Streamlit (Menú ⋮ → Settings → Theme).
-  · Elemento memorable: la franja de forma de onda del encabezado. Todo lo demás
-    se mantiene sobrio.
+Dos paletas que siguen el tema activo de Streamlit (st.context.theme.type):
+  · Oscuro: fondo ciruela casi negro y rosa oscuro (#C2185B).
+  · Claro: todo blanco y rojo (#C8102E).
+Minimalismo: una sola tinta de acento, bordes finos, nada de emojis; los íconos son SVG.
 """
 import streamlit as st
 
-CSS = """
+PALETAS = {
+    "dark": {
+        "fondo": "#110E13", "superficie": "#1A161D", "superficie2": "#221D26",
+        "borde": "#2E2833", "texto": "#EEE8F0", "tenue": "#9B92A1",
+        "acento": "#C2185B", "acento_texto": "#E0558F", "acento_suave": "rgba(194,24,91,.14)",
+        "ia": "#D9A23A", "ia_suave": "rgba(217,162,58,.12)", "peligro": "#F0506E",
+    },
+    "light": {
+        "fondo": "#FFFFFF", "superficie": "#FFFFFF", "superficie2": "#FAF6F6",
+        "borde": "#EEE6E7", "texto": "#1B1416", "tenue": "#6E6366",
+        "acento": "#C8102E", "acento_texto": "#B00D27", "acento_suave": "rgba(200,16,46,.07)",
+        "ia": "#9A6200", "ia_suave": "rgba(154,98,0,.08)", "peligro": "#C8102E",
+    },
+}
+
+
+def tema_actual() -> str:
+    """'dark' o 'light'. Si Streamlit aún no lo informa (p. ej. en pruebas), se asume oscuro."""
+    try:
+        return st.context.theme.type or "dark"
+    except Exception:
+        return "dark"
+
+
+def paleta() -> dict:
+    return PALETAS[tema_actual()]
+
+
+_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap');
 
 :root {
-  --bs-acento: #D63A78;
-  --bs-azul: #2F6FE4;
-  --bs-humano: #0E9F8A;
-  --bs-ia: #C98200;
-  --bs-peligro: #D7263D;
-  --bs-borde: rgba(128,128,128,.24);
-  --bs-superficie: rgba(128,128,128,.07);
-  --bs-tenue: rgba(128,128,128,.95);
-  --bs-radio: 14px;
+  --bs-fondo: __fondo__; --bs-sup: __superficie__; --bs-sup2: __superficie2__;
+  --bs-borde: __borde__; --bs-texto: __texto__; --bs-tenue: __tenue__;
+  --bs-acento: __acento__; --bs-acento-t: __acento_texto__; --bs-acento-s: __acento_suave__;
+  --bs-ia: __ia__; --bs-ia-s: __ia_suave__; --bs-peligro: __peligro__;
 }
 
 html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
@@ -35,90 +53,110 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
 }
 h1, h2, h3, .bs-display {
   font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif !important;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
-footer { visibility: hidden; }
-.block-container { padding-top: 2.2rem; max-width: 1180px; }
+footer, [data-testid="stDecoration"] { display: none; }
+.block-container { padding-top: 2.4rem; max-width: 1140px; }
 
-/* ---------- Encabezado con forma de onda (elemento memorable) ---------- */
-.bs-hero {
-  position: relative; overflow: hidden;
-  padding: 30px 32px 24px; margin-bottom: 1.4rem;
-  border: 1px solid var(--bs-borde); border-radius: 22px;
-  background: var(--bs-superficie);
-}
-.bs-hero h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.05; margin: 0 0 .4rem; padding: 0; font-weight: 800; }
-.bs-hero p  { max-width: 60ch; margin: 0; opacity: .8; font-size: 1.02rem; }
-.bs-onda { display: flex; align-items: flex-end; gap: 3px; height: 46px; margin-top: 22px; }
+/* ---------- Encabezado ---------- */
+.bs-hero { margin: 0 0 1.6rem; }
+.bs-hero h1 { font-size: clamp(1.9rem, 4.2vw, 2.8rem); font-weight: 800; line-height: 1.02; margin: 0; padding: 0; }
+.bs-hero p { margin: .45rem 0 0; color: var(--bs-tenue); font-size: 1rem; max-width: 56ch; }
+.bs-onda { display: flex; align-items: flex-end; gap: 3px; height: 28px; margin-top: 18px; }
 .bs-onda span {
-  flex: 1; min-width: 2px; border-radius: 2px 2px 0 0;
-  background: linear-gradient(180deg, var(--bs-acento), var(--bs-azul));
-  opacity: .85; transform-origin: bottom;
-  animation: bs-subir .9s cubic-bezier(.2,.8,.2,1) both;
+  flex: 1; min-width: 2px; border-radius: 2px; background: var(--bs-acento); opacity: .9;
+  transform-origin: bottom; animation: bs-subir .8s cubic-bezier(.2,.8,.2,1) both;
 }
-@keyframes bs-subir { from { transform: scaleY(.05); } to { transform: scaleY(1); } }
+@keyframes bs-subir { from { transform: scaleY(.08); } to { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .bs-onda span { animation: none; } }
 
-.bs-cifras { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 18px; }
-.bs-cifra b { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.45rem; display: block; line-height: 1.1; }
-.bs-cifra small { opacity: .7; font-size: .82rem; }
-
-/* ---------- Insignias ---------- */
+/* ---------- Íconos e insignias ---------- */
+.bs-ico { width: 1em; height: 1em; vertical-align: -0.14em; flex: none; }
 .bs-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 9px; margin: 0 4px 4px 0; border-radius: 999px;
-  font-size: .74rem; font-weight: 600; border: 1px solid; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; margin: 0 4px 2px 0;
+  border-radius: 999px; font-size: .72rem; font-weight: 600; white-space: nowrap;
+  color: var(--bs-acento-t); background: var(--bs-acento-s);
 }
-.bs-badge.humano    { color: var(--bs-humano);  border-color: rgba(14,159,138,.45); background: rgba(14,159,138,.10); }
-.bs-badge.comprador { color: var(--bs-azul);    border-color: rgba(47,111,228,.45); background: rgba(47,111,228,.10); }
-.bs-badge.ia        { color: var(--bs-ia);      border-color: rgba(201,130,0,.45);  background: rgba(201,130,0,.10); }
-.bs-badge.exclusivo { color: var(--bs-acento);  border-color: rgba(214,58,120,.45); background: rgba(214,58,120,.10); }
-.bs-badge.neutro    { color: var(--bs-tenue);   border-color: var(--bs-borde);      background: transparent; }
-.bs-badge.peligro   { color: var(--bs-peligro); border-color: rgba(215,38,61,.45);  background: rgba(215,38,61,.10); }
+.bs-badge.ia { color: var(--bs-ia); background: var(--bs-ia-s); }
+.bs-badge.neutro { color: var(--bs-tenue); background: var(--bs-sup2); }
+.bs-badge.peligro { color: var(--bs-peligro); background: var(--bs-acento-s); }
 
-/* ---------- Tarjetas de beat / servicio ---------- */
-.bs-titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.12rem; line-height: 1.2; margin: 0 0 2px; }
-.bs-autor  { font-size: .86rem; opacity: .75; margin-bottom: 6px; }
-.bs-chips  { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
-.bs-chip   { font-size: .76rem; padding: 2px 8px; border-radius: 6px; background: var(--bs-superficie); border: 1px solid var(--bs-borde); }
-.bs-precio { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.35rem; font-weight: 700; margin: 2px 0 4px; }
-.bs-precio small { font-size: .8rem; font-weight: 500; opacity: .65; }
-.bs-texto  { font-size: .92rem; opacity: .88; line-height: 1.5; max-width: 72ch; }
-.bs-sello-excl { font-size: .95rem; line-height: 1.4; margin: 4px 0 8px; }
+/* ---------- Tarjetas ---------- */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+  border-color: var(--bs-borde) !important; border-radius: 14px; background: var(--bs-sup);
+  transition: border-color .15s ease;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-acento) !important; }
+.bs-titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 1.08rem; line-height: 1.2; margin: 0; }
+.bs-autor  { font-size: .84rem; color: var(--bs-tenue); margin: 2px 0 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bs-meta   { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--bs-tenue); margin: 2px 0 4px; }
+.bs-precio { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.25rem; font-weight: 600; margin: 0; white-space: nowrap; }
+.bs-texto  { font-size: .92rem; color: var(--bs-texto); opacity: .85; line-height: 1.55; max-width: 70ch; margin: 4px 0; }
+.bs-nota   { font-size: .8rem; color: var(--bs-tenue); display: flex; align-items: center; gap: 6px; }
 
-/* ---------- Cuenta regresiva de 7 días ---------- */
-.bs-reloj { margin: 6px 0 10px; }
-.bs-reloj .riel { height: 8px; border-radius: 4px; background: var(--bs-borde); overflow: hidden; }
-.bs-reloj .riel > div { height: 100%; border-radius: 4px; }
-.bs-reloj small { display: block; margin-top: 4px; font-size: .82rem; }
+/* ---------- Cuenta regresiva ---------- */
+.bs-reloj { margin: 8px 0 12px; }
+.bs-reloj .riel { height: 4px; border-radius: 2px; background: var(--bs-borde); overflow: hidden; }
+.bs-reloj .riel > div { height: 100%; border-radius: 2px; }
+.bs-reloj small { display: block; margin-top: 6px; font-size: .8rem; color: var(--bs-tenue); }
 
-/* ---------- Perfil ---------- */
+/* ---------- Listas con ícono (pasos, notificaciones) ---------- */
+.bs-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--bs-borde); font-size: .92rem; }
+.bs-item:last-child { border-bottom: none; }
+.bs-item .bs-ico { margin-top: 3px; }
+.bs-item small { display: block; color: var(--bs-tenue); font-size: .78rem; margin-top: 2px; }
+.bs-item.leido { opacity: .6; }
+
+/* ---------- Perfil y planes ---------- */
 .bs-avatar {
-  width: 96px; height: 96px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Bricolage Grotesque', sans-serif; font-size: 2.2rem; font-weight: 800; color: #fff;
-  background: linear-gradient(135deg, var(--bs-acento), var(--bs-azul));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; color: #fff; background: var(--bs-acento);
 }
-.bs-plan { border: 1px solid var(--bs-borde); border-radius: var(--bs-radio); padding: 18px; background: var(--bs-superficie); }
-.bs-plan b.monto { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.7rem; }
+.bs-plan { border: 1px solid var(--bs-borde); border-radius: 14px; padding: 18px; background: var(--bs-sup); }
+.bs-plan b.monto { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.6rem; display: block; margin: 4px 0; }
+.bs-plan small { color: var(--bs-tenue); }
 
 /* ---------- Barra lateral ---------- */
-.bs-logo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.35rem; line-height: 1; margin-bottom: 2px; }
-.bs-logo span { color: var(--bs-acento); }
-.bs-lema { font-size: .8rem; opacity: .7; margin-bottom: .6rem; }
+.bs-logo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.3rem; line-height: 1; }
+.bs-logo span { color: var(--bs-acento-t); }
+.bs-usuario { font-size: .9rem; margin-bottom: 6px; }
+.bs-usuario small { color: var(--bs-tenue); }
 
-/* ---------- Ajustes de widgets nativos ---------- */
-.stButton > button, .stDownloadButton > button, .stLinkButton > a { border-radius: 10px; font-weight: 600; padding-left: .55rem; padding-right: .55rem; }
-div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: var(--bs-radio); }
-button:focus-visible, a:focus-visible { outline: 2px solid var(--bs-azul) !important; outline-offset: 2px; }
+/* ---------- Botones ---------- */
+.stButton > button, .stDownloadButton > button, .stLinkButton > a, [data-testid="stPopover"] button {
+  border-radius: 10px; font-weight: 600; padding-left: .7rem; padding-right: .7rem;
+}
+.stButton > button[kind="secondary"], [data-testid="stPopover"] button {
+  background: transparent; border-color: var(--bs-borde);
+}
+.stButton > button[kind="secondary"]:hover, [data-testid="stPopover"] button:hover {
+  border-color: var(--bs-acento); color: var(--bs-acento-t);
+}
+/* Botones solo-ícono de las tarjetas: cuadrados y discretos */
+div[class*="st-key-ico_"] { display: flex; justify-content: center; }
+div[class*="st-key-ico_"] button {
+  width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0 !important;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+}
+div[class*="st-key-ico_"] button[kind="primary"] { color: #fff; }
+div[class*="st-key-ico_"] button [data-testid="stIconMaterial"] { font-size: 1.2rem; }
+/* La fila precio + íconos (la más interna) no se apila en móvil */
+[data-testid="stHorizontalBlock"]:has([class*="st-key-ico_"]):not(:has([data-testid="stHorizontalBlock"])) { flex-wrap: nowrap !important; gap: .4rem; }
+[data-testid="stHorizontalBlock"]:has([class*="st-key-ico_"]):not(:has([data-testid="stHorizontalBlock"])) > [data-testid="stColumn"] {
+  min-width: 0 !important; width: auto !important;
+}
+button:focus-visible, a:focus-visible { outline: 2px solid var(--bs-acento) !important; outline-offset: 2px; }
 
 @media (max-width: 640px) {
-  .bs-hero { padding: 22px 18px 18px; }
-  .bs-cifras { gap: 16px; }
+  .block-container { padding-top: 3.4rem; }
+  .bs-onda { height: 20px; }
 }
 </style>
 """
 
 
 def inyectar_css() -> None:
-    st.markdown(CSS, unsafe_allow_html=True)
+    css = _CSS
+    for clave, valor in paleta().items():
+        css = css.replace(f"__{clave}__", valor)
+    st.markdown(css, unsafe_allow_html=True)

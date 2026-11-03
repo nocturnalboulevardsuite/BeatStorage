@@ -99,4 +99,4 @@ Las tareas periódicas (vencimientos y regla de 7 días) se ejecutan en cada car
 
 SQLite sirve para una demo con pocos usuarios simultáneos. Para producción: PostgreSQL, almacenamiento de objetos para los archivos, y verificación de correo y teléfono en el registro.
 
-La tipografía usa Google Fonts (Bricolage Grotesque e Instrument Sans) con fuentes del sistema como respaldo. El modo claro/oscuro se cambia en el menú ⋮ → Settings → Theme.
+La tipografía usa Google Fonts (Bricolage Grotesque e Instrument Sans) con fuentes del sistema como respaldo. Hay dos temas definidos en `.streamlit/config.toml`: oscuro con rosa oscuro (#C2185B) y claro en blanco con rojo (#C8102E). La app sigue el tema del sistema y se puede cambiar en el menú ⋮ → Settings → Theme. No se usan emojis: los íconos son SVG en línea o íconos Material de Streamlit.
