@@ -41,6 +41,16 @@ pytest -q
 
 Son 34 pruebas: reglas de negocio (registro, bloqueo de login, filtro anti-IA, regla de 7 días, membresías, reseñas, denuncias, marca de agua, migración de BD) y de interfaz (todas las páginas para cada rol, compra, login). Usan una base de datos temporal, nunca `data/`.
 
+## Novedades de la versión 5
+
+**Logo:** una "b" minúscula formada por un mástil y un disco de vinilo, con el nombre en minúsculas.
+
+**Productores estilo SoundCloud:** directorio de artistas con foto circular y perfil con portada, botones de acción (Reproducir, Contactar, Beat a medida), cifras y secciones en píldoras. Cada pista muestra su forma de onda real (calculada del audio). Al reproducir, la onda se colorea a medida que avanza y se puede hacer clic en ella para saltar.
+
+**Registro estilo Spotify:** tres pasos centrados (correo, contraseña con reglas visibles, perfil y cómo usarás la plataforma) con barra de progreso. El inicio de sesión también tiene su propia pantalla.
+
+**Navegación:** botones en la barra lateral en vez de opciones de radio.
+
 ## Estructura
 
 ```
