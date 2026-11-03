@@ -1,0 +1,5 @@
+streamlit>=1.46
+pandas>=2.0
+numpy>=1.26
+pillow>=10.0
+pydub>=0.25   # para leer MP3 (requiere ffmpeg en el sistema)
