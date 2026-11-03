@@ -6,21 +6,21 @@ Ejecutar:  streamlit run app.py
 Flujo de cada ejecución:
   1. Configura la página e inicializa la BD (y los datos demo la primera vez).
   2. Ejecuta tareas periódicas (vencimiento de membresías, regla de 7 días).
-  3. Inyecta el CSS.
-  4. Barra lateral: logo, navegación según el rol y bloque de sesión.
+  3. Inyecta el CSS según el tema activo (oscuro: rosa oscuro / claro: blanco y rojo).
+  4. Barra lateral: logo, navegación con íconos y bloque de sesión.
   5. Renderiza la vista elegida.
 """
 import streamlit as st
 
-st.set_page_config(page_title="BeatStorage LATAM", page_icon="🎛️", layout="wide",
-                   initial_sidebar_state="auto")
+st.set_page_config(page_title="BeatStorage LATAM", page_icon=":material/graphic_eq:",
+                   layout="wide", initial_sidebar_state="auto")
 
 import auth  # noqa: E402  (después de set_page_config)
 import core  # noqa: E402
 import db  # noqa: E402
 import styles  # noqa: E402
-from components import insignias  # noqa: E402
-from config import APP_LEMA, PAISES  # noqa: E402
+from components import esc, icono, insignias  # noqa: E402
+from config import PAISES  # noqa: E402
 from vistas import (admin, catalogo, licitaciones, onboarding, panel,  # noqa: E402
                     productores, servicios)
 
@@ -28,7 +28,7 @@ from vistas import (admin, catalogo, licitaciones, onboarding, panel,  # noqa: E
 # ----------------------------------------------------------------------------
 # 1. Base de datos (una sola vez por proceso)
 # ----------------------------------------------------------------------------
-@st.cache_resource(show_spinner="Preparando BeatStorage y generando beats de demostración…")
+@st.cache_resource(show_spinner="Preparando BeatStorage…")
 def preparar_bd() -> bool:
     if db.inicializar():
         import seed
@@ -41,29 +41,32 @@ core.tareas_periodicas()
 styles.inyectar_css()
 
 # ----------------------------------------------------------------------------
-# 2. Páginas disponibles por rol
+# 2. Páginas: id interno → (ícono Material, nombre visible, vista)
+#    Los ids no cambian aunque cambie el texto, así los botones "ir_a" siguen funcionando.
 # ----------------------------------------------------------------------------
 PAGINAS = {
-    "🏠 Catálogo": catalogo.render,
-    "🎤 Fix my Vocal": servicios.render,
-    "📋 Tablón de encargos": licitaciones.render,
-    "🎧 Productores": productores.render,
-    "🧭 Mi panel": panel.render,
-    "🛡️ Verificación de productor": onboarding.render,
-    "⚙️ Administración": admin.render,
+    "catalogo":     (":material/library_music:", "Catálogo", catalogo.render),
+    "voz":          (":material/mic:", "Fix my Vocal", servicios.render),
+    "tablon":       (":material/assignment:", "Encargos", licitaciones.render),
+    "productores":  (":material/headphones:", "Productores", productores.render),
+    "panel":        (":material/space_dashboard:", "Mi panel", panel.render),
+    "verificacion": (":material/verified_user:", "Verificación", onboarding.render),
+    "admin":        (":material/admin_panel_settings:", "Administración", admin.render),
 }
 
 
 def paginas_para(usuario: dict | None) -> list[str]:
-    base = ["🏠 Catálogo", "🎤 Fix my Vocal", "📋 Tablón de encargos", "🎧 Productores"]
+    base = ["catalogo", "voz", "tablon", "productores"]
     if not usuario:
         return base
     if usuario["rol"] == "admin":
-        return base + ["⚙️ Administración"]
-    extra = ["🧭 Mi panel"]
-    if usuario["rol"] == "productor":
-        extra.append("🛡️ Verificación de productor")
-    return base + extra
+        return base + ["admin"]
+    return base + ["panel"] + (["verificacion"] if usuario["rol"] == "productor" else [])
+
+
+def etiqueta(pagina: str) -> str:
+    ico, nombre, _ = PAGINAS[pagina]
+    return f"{ico}  {nombre}"
 
 
 # ----------------------------------------------------------------------------
@@ -71,23 +74,25 @@ def paginas_para(usuario: dict | None) -> list[str]:
 # ----------------------------------------------------------------------------
 def bloque_sesion(usuario: dict | None) -> None:
     if usuario:
-        st.markdown(f"**@{usuario['username']}** ({usuario['rol']})")
-        if usuario["rol"] != "admin":
-            st.markdown(insignias(usuario) or '<span class="bs-badge neutro">Sin verificación</span>',
-                        unsafe_allow_html=True)
+        nombre = esc(usuario["nombre_publico"] or usuario["username"])
+        st.markdown(f'<div class="bs-usuario"><b>{nombre}</b><br><small>@{esc(usuario["username"])}'
+                    f'</small></div>{insignias(usuario)}', unsafe_allow_html=True)
         n = core.no_leidas(usuario["id"])
         if n:
-            st.caption(f"🔔 {n} notificaciones sin leer en Mi panel")
+            st.markdown(f'<div class="bs-nota">{icono("campana")} {n} sin leer</div>',
+                        unsafe_allow_html=True)
         if usuario["estado"] == "aviso_suspension":
-            st.error("Cuenta con aviso de suspensión.")
-        if st.button("Cerrar sesión", width="stretch"):
+            st.markdown(f'<div class="bs-nota" style="color:var(--bs-peligro)">{icono("alerta")} '
+                        'Cuenta en revisión</div>', unsafe_allow_html=True)
+        st.write("")
+        if st.button("Cerrar sesión", icon=":material/logout:", type="tertiary"):
             auth.cerrar_sesion()
             st.rerun()
         return
 
     ingresar, registrarse = st.tabs(["Ingresar", "Crear cuenta"])
     with ingresar:
-        with st.form("login"):
+        with st.form("login", border=False):
             u = st.text_input("Usuario o correo")
             p = st.text_input("Contraseña", type="password")
             if st.form_submit_button("Ingresar", type="primary", width="stretch"):
@@ -96,26 +101,26 @@ def bloque_sesion(usuario: dict | None) -> None:
                     st.session_state["uid"] = encontrado["id"]
                     st.rerun()
                 st.error(error)
-        with st.expander("Cuentas de demostración"):
+        with st.popover("Cuentas demo", icon=":material/info:", type="tertiary"):
             st.caption("Contraseña: demo1234 (admin: admin1234)")
             st.code("sandyy88\nartista_lima\nlofi_valpo\nmezclas_bogota\ntrapsur\nadmin", language=None)
 
     with registrarse:
-        with st.form("registro"):
-            rol = st.radio("Quiero", ["cliente", "productor"], horizontal=True,
-                           format_func={"cliente": "Comprar / encargar",
-                                        "productor": "Vender mis beats"}.get)
+        with st.form("registro", border=False):
+            rol = st.segmented_control("Quiero", ["cliente", "productor"], default="cliente",
+                                       format_func={"cliente": "Comprar",
+                                                    "productor": "Vender beats"}.get)
             username = st.text_input("Usuario")
             email = st.text_input("Correo")
             pais = st.selectbox("País", PAISES)
             wsp = st.text_input("WhatsApp (opcional)", placeholder="56912345678")
-            pw = st.text_input("Contraseña (mín. 8)", type="password")
+            pw = st.text_input("Contraseña", type="password", help="Mínimo 8 caracteres")
             if st.form_submit_button("Crear cuenta", type="primary", width="stretch"):
-                ok, res = auth.crear_usuario(username, email, pw, rol, pais=pais, whatsapp=wsp)
+                ok, res = auth.crear_usuario(username, email, pw, rol or "cliente",
+                                             pais=pais, whatsapp=wsp)
                 if ok:
                     st.session_state["uid"] = res
-                    st.session_state["nav"] = ("🛡️ Verificación de productor" if rol == "productor"
-                                               else "🏠 Catálogo")
+                    st.session_state["nav"] = "verificacion" if rol == "productor" else "catalogo"
                     st.rerun()
                 st.error(res)
 
@@ -126,13 +131,14 @@ if st.session_state.get("nav") not in opciones:
     st.session_state["nav"] = opciones[0]
 
 with st.sidebar:
-    st.markdown(f'<div class="bs-logo">BeatStorage <span>LATAM</span></div>'
-                f'<div class="bs-lema">{APP_LEMA}</div>', unsafe_allow_html=True)
-    pagina = st.radio("Navegación", opciones, key="nav", label_visibility="collapsed")
+    st.markdown('<div class="bs-logo">BeatStorage <span>LATAM</span></div>', unsafe_allow_html=True)
+    st.write("")
+    pagina = st.radio("Navegación", opciones, key="nav", format_func=etiqueta,
+                      label_visibility="collapsed")
     st.divider()
     bloque_sesion(usuario)
 
 # ----------------------------------------------------------------------------
 # 4. Vista seleccionada
 # ----------------------------------------------------------------------------
-PAGINAS[pagina](usuario)
+PAGINAS[pagina][2](usuario)
