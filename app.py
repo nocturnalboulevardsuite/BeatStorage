@@ -48,7 +48,6 @@ try:
     import styles  # noqa: E402
     from components import (esc, flujo_pedido, formulario_denuncia, icono,  # noqa: E402
                             insignias, ir_a, tarjeta_servicio)
-    from config import PAISES  # noqa: E402
     from vistas import admin, catalogo, licitaciones, onboarding, panel, servicios  # noqa: E402
 
     # Ojo: una expresión suelta (p. ej. "styles.paleta") la dibuja Streamlit en pantalla
@@ -265,7 +264,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .bs-reglas div.ok { color: var(--bs-texto); }
 .bs-separador { display: flex; align-items: center; gap: 12px; color: var(--bs-tenue); font-size: .8rem; margin: 14px 0; }
 .bs-separador::before, .bs-separador::after { content: ""; flex: 1; height: 1px; background: var(--bs-borde); }
-[class*="st-key-rol_"] button { min-height: 76px; border-radius: 16px !important; }
 
 
 /* ---------- Rojo en los controles de Streamlit (antes rosados) ---------- */
@@ -791,8 +789,6 @@ def perfil_productor(pid: int, usuario: dict | None) -> None:
 # ----------------------------------------------------------------------------
 def abrir_acceso(modo: str | None) -> None:
     st.session_state["acceso"] = modo
-    if modo == "registro":
-        st.session_state["reg_paso"] = 1
 
 
 def _cabecera_acceso(titulo: str, subtitulo: str = "") -> None:
@@ -801,101 +797,57 @@ def _cabecera_acceso(titulo: str, subtitulo: str = "") -> None:
                 unsafe_allow_html=True)
 
 
-def _ir_paso(paso: int) -> None:
-    st.session_state["reg_paso"] = paso
-
-
-def _reglas_clave(clave: str) -> list[tuple[str, bool]]:
-    return [("1 letra", any(c.isalpha() for c in clave)),
-            ("1 número", any(c.isdigit() for c in clave)),
-            ("8 caracteres como mínimo", len(clave) >= 8)]
+def _problemas_clave(clave: str) -> list[str]:
+    faltan = []
+    if len(clave) < 8:
+        faltan.append("8 caracteres")
+    if not any(c.isalpha() for c in clave):
+        faltan.append("una letra")
+    if not any(c.isdigit() for c in clave):
+        faltan.append("un número")
+    return faltan
 
 
 def pagina_registro() -> None:
-    _, centro, _ = st.columns([1, 1.3, 1])
+    """Registro en una sola pantalla: nickname, contraseña dos veces y correo opcional.
+    Al crear la cuenta se inicia sesión de inmediato."""
+    _, centro, _ = st.columns([1, 1.2, 1])
     with centro:
-        paso = st.session_state.setdefault("reg_paso", 1)
-        datos = st.session_state.setdefault("reg_datos", {})
-
-        if paso > 1:
-            st.button("", icon=":material/arrow_back:", key="reg_atras", type="tertiary",
-                      help="Volver", on_click=_ir_paso, args=(paso - 1,))
-            st.markdown(f'<div class="bs-progreso"><div style="width:{(paso - 1) / 3 * 100:.0f}%"></div></div>'
-                        f'<div class="bs-paso">Paso {paso - 1} de 3</div>', unsafe_allow_html=True)
-
-        # ---- Paso 1: correo ----
-        if paso == 1:
-            st.button("Inicio", icon=":material/arrow_back:", key="reg_portal", type="tertiary",
-                      on_click=abrir_acceso, args=(None,))
-            _cabecera_acceso("Regístrate para empezar a escuchar")
-            with st.form("reg_1", border=False):
-                email = st.text_input("Correo electrónico", value=datos.get("email", ""),
-                                      placeholder="nombre@dominio.com")
-                if st.form_submit_button("Siguiente", type="primary", width="stretch"):
-                    email = email.strip().lower()
-                    if not auth.RE_EMAIL.match(email):
-                        st.error("Escribe un correo válido.")
-                    elif db.uno("SELECT id FROM usuarios WHERE email=?", (email,)):
-                        st.error("Ese correo ya tiene una cuenta. Inicia sesión.")
-                    else:
-                        datos["email"] = email
-                        _ir_paso(2)
+        st.button("Inicio", icon=":material/arrow_back:", key="reg_portal", type="tertiary",
+                  on_click=abrir_acceso, args=(None,))
+        _cabecera_acceso("Regístrate")
+        with st.form("registro", border=False):
+            nick = st.text_input("Nickname", max_chars=24, placeholder="tu_nombre")
+            clave = st.text_input("Contraseña", type="password",
+                                  help="Mínimo 8 caracteres, con al menos una letra y un número.")
+            clave2 = st.text_input("Repite la contraseña", type="password")
+            email = st.text_input("Correo electrónico (opcional)", placeholder="nombre@dominio.com",
+                                  help="Sirve para recuperar tu cuenta y para que te contacten.")
+            if st.form_submit_button("Registrarse", type="primary", width="stretch"):
+                nick, email = nick.strip(), email.strip().lower()
+                faltan = _problemas_clave(clave)
+                if not nick:
+                    st.error("Escribe un nickname.")
+                elif faltan:
+                    st.error("La contraseña necesita " + ", ".join(faltan) + ".")
+                elif clave != clave2:
+                    st.error("Las contraseñas no coinciden.")
+                elif email and not auth.RE_EMAIL.match(email):
+                    st.error("Ese correo no es válido. Corrígelo o déjalo vacío.")
+                elif email and db.uno("SELECT id FROM usuarios WHERE email=?", (email,)):
+                    st.error("Ese correo ya tiene una cuenta. Inicia sesión.")
+                else:
+                    ok, res = auth.crear_usuario(nick, email, clave, "cliente",
+                                                 nombre_publico=nick, pais="", whatsapp="")
+                    if ok:   # sesión iniciada de una
+                        st.session_state["uid"] = res
+                        st.session_state["acceso"] = None
+                        st.session_state["nav"] = "catalogo"
                         st.rerun()
-            st.markdown('<div class="bs-separador">o</div>', unsafe_allow_html=True)
-            st.button("¿Ya tienes una cuenta? Inicia sesión", type="tertiary", width="stretch",
-                      key="reg_a_login", on_click=abrir_acceso, args=("login",))
-
-        # ---- Paso 2: contraseña con reglas visibles ----
-        elif paso == 2:
-            _cabecera_acceso("Crea una contraseña", datos.get("email", ""))
-            clave = st.text_input("Contraseña", type="password", key="reg_clave")
-            reglas = _reglas_clave(clave)
-            st.markdown('<div class="bs-reglas">' + "".join(
-                f'<div class="{"ok" if ok else ""}">{icono("circulo_ok" if ok else "circulo")} {texto}</div>'
-                for texto, ok in reglas) + "</div>", unsafe_allow_html=True)
-            if st.button("Siguiente", type="primary", width="stretch", key="reg_sig_2",
-                         disabled=not all(ok for _, ok in reglas)):
-                datos["clave"] = clave
-                _ir_paso(3)
-                st.rerun()
-
-        # ---- Paso 3: perfil y cómo usará la plataforma ----
-        else:
-            _cabecera_acceso("Cuéntanos sobre ti")
-            sugerido = "".join(c for c in datos.get("email", "").split("@")[0] if c.isalnum() or c in "_.")[:24]
-            nombre = st.text_input("Nombre", value=datos.get("nombre", ""),
-                                   help="Este nombre aparecerá en tu perfil")
-            usuario_n = st.text_input("Nombre de usuario", value=datos.get("usuario", sugerido))
-            c1, c2 = st.columns(2)
-            pais = c1.selectbox("País", PAISES)
-            wsp = c2.text_input("WhatsApp (opcional)", placeholder="56912345678")
-
-            st.markdown('<div class="bs-paso" style="margin-top:8px">¿Cómo vas a usar BeatStorage?</div>',
-                        unsafe_allow_html=True)
-            rol = datos.get("rol", "cliente")
-            r1, r2 = st.columns(2)
-            if r1.button("Escuchar y comprar", key="rol_cliente", icon=":material/headphones:",
-                         type="primary" if rol == "cliente" else "secondary", width="stretch"):
-                datos["rol"] = "cliente"
-                st.rerun()
-            if r2.button("Vender mis beats", key="rol_productor", icon=":material/piano:",
-                         type="primary" if rol == "productor" else "secondary", width="stretch"):
-                datos["rol"] = "productor"
-                st.rerun()
-            if rol == "productor":
-                st.caption("Después te pediremos pruebas de autoría y 10 beats para aparecer en el catálogo.")
-
-            if st.button("Crear cuenta", type="primary", width="stretch", key="reg_crear"):
-                datos.update(nombre=nombre, usuario=usuario_n)
-                ok, res = auth.crear_usuario(usuario_n, datos.get("email", ""), datos.get("clave", ""), rol,
-                                             nombre_publico=nombre, pais=pais, whatsapp=wsp)
-                if ok:
-                    for clave in ("reg_paso", "reg_datos", "reg_clave", "acceso"):
-                        st.session_state.pop(clave, None)
-                    st.session_state["uid"] = res
-                    st.session_state["nav"] = "verificacion" if rol == "productor" else "catalogo"
-                    st.rerun()
-                st.error(res)
+                    st.error(res)
+        st.markdown('<div class="bs-separador">o</div>', unsafe_allow_html=True)
+        st.button("¿Ya tienes cuenta? Inicia sesión", type="tertiary", width="stretch",
+                  key="reg_a_login", on_click=abrir_acceso, args=("login",))
 
 
 def pagina_login() -> None:
@@ -905,7 +857,7 @@ def pagina_login() -> None:
                   on_click=abrir_acceso, args=(None,))
         _cabecera_acceso("Inicia sesión en BeatStorage")
         with st.form("login", border=False):
-            u = st.text_input("Correo o nombre de usuario")
+            u = st.text_input("Nickname o correo")
             p = st.text_input("Contraseña", type="password")
             if st.form_submit_button("Iniciar sesión", type="primary", width="stretch"):
                 encontrado, error = auth.autenticar(u, p)
