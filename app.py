@@ -167,7 +167,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Logo (monocromo: la luz queda para la música) ---------- */
 .bs-logo2 { display: flex; align-items: center; gap: 10px; margin: .2rem 0 1.8rem; }
-.bs-logo2 svg { height: 30px; width: auto; aspect-ratio: 54 / 40; flex: none; }
+.bs-logo2 svg { height: 30px; width: auto; aspect-ratio: 30 / 40; flex: none; }
 .bs-logo2 .nombre { white-space: nowrap; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
   font-size: 1.22rem; letter-spacing: -0.04em; color: var(--bs-texto); line-height: 1; }
 .bs-logo2 .region { display: inline-block; white-space: nowrap; font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .8rem;
@@ -253,7 +253,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Registro e inicio de sesión ---------- */
 .bs-acceso { text-align: center; margin: 1.8rem 0 1.5rem; }
-.bs-acceso svg { height: 40px; width: auto; aspect-ratio: 54 / 40; }
+.bs-acceso svg { height: 40px; width: auto; aspect-ratio: 30 / 40; }
 .bs-acceso .titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.04em;
   font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.08; margin: .9rem 0 0; text-wrap: balance; }
 .bs-acceso p { color: var(--bs-tenue); margin: .5rem 0 0; }
@@ -280,23 +280,19 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .stApp a { color: var(--bs-acento-t); }
 
 /* ---------- Logo: una B con dos parlantes que vibran ---------- */
-.bs-b { overflow: visible; animation: bs-temblor .5s linear infinite, bs-brillo .25s ease-out infinite; }
+.bs-b { overflow: visible; animation: bs-temblor .5s linear infinite, bs-brillo .5s ease-out infinite; }
 .bs-b .onda { transform-box: fill-box; transform-origin: center; opacity: 0;
   animation: bs-onda .5s cubic-bezier(.2,.7,.4,1) infinite; }
 .bs-b .onda.o2 { animation-delay: -.06s; }
-.bs-b .s-arriba .onda { animation-delay: -.25s; }
-.bs-b .s-arriba .onda.o2 { animation-delay: -.31s; }
 @keyframes bs-onda { 0% { transform: scale(1); opacity: .85; } 60% { opacity: .15; } 100% { transform: scale(1.75); opacity: 0; } }
 @keyframes bs-brillo { 0% { filter: drop-shadow(0 0 4px rgba(255, 50, 20, .75)); }
   100% { filter: drop-shadow(0 0 1px rgba(255, 50, 20, .25)); } }
-.bs-portal .bs-b { animation: bs-temblor .5s linear infinite, bs-brillo-g .25s ease-out infinite; }
+.bs-portal .bs-b { animation: bs-temblor .5s linear infinite, bs-brillo-g .5s ease-out infinite; }
 @keyframes bs-brillo-g { 0% { filter: drop-shadow(0 0 22px rgba(255, 45, 15, .7)); }
   100% { filter: drop-shadow(0 6px 14px rgba(255, 45, 15, .25)); } }
 .bs-b .cono { transform-box: fill-box; transform-origin: center; }
 .bs-b .grave .cono { animation: bs-golpe .5s cubic-bezier(.2,.9,.3,1) infinite; }
 .bs-b .agudo .cono { animation: bs-agudo .25s ease-in-out infinite; }
-.bs-b .s-arriba .cono { animation: bs-golpe .5s cubic-bezier(.2,.9,.3,1) infinite; animation-delay: -.25s; }
-.bs-b .s-abajo .cono { animation: bs-agudo .25s ease-in-out infinite; animation-delay: -.12s; }
 @keyframes bs-golpe { 0% { transform: scale(1); } 10% { transform: scale(1.14); } 26% { transform: scale(.95); }
   45%, 100% { transform: scale(1); } }
 @keyframes bs-agudo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
@@ -330,7 +326,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Portada de inicio (sin sesión) ---------- */
 .bs-portal { text-align: center; padding: 8vh 0 1.4rem; }
-.bs-portal svg { height: 120px; width: auto; aspect-ratio: 54 / 40; }
+.bs-portal svg { height: 136px; width: auto; aspect-ratio: 30 / 40; }
 .bs-portal .marca { white-space: nowrap; overflow-wrap: normal; word-break: keep-all;
   font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.05em;
   font-size: clamp(1.9rem, 9vw, 3.4rem); line-height: 1; margin-top: 1.2rem; color: var(--bs-texto); }
@@ -423,72 +419,62 @@ st.markdown(_CSS
 #    (beat + almacenamiento de música). El hueco del disco es transparente.
 # ----------------------------------------------------------------------------
 def logo_svg(uid: str = "l") -> str:
-    """Las letras B y S como cajas acústicas negras con borde rojo-naranja y cuatro parlantes
-    realistas (aro con tornillos, suspensión de goma, cono con nervios y tapa brillante).
-    Los conos vibran y cada golpe de bajo suelta una onda rojiza."""
+    """Una B negra con forma de caja de parlante y sus dos huecos son parlantes rojos
+    (aro con tornillos, suspensión de goma, cono rojo con nervios y tapa brillante).
+    Los conos vibran y cada golpe de bajo suelta una onda roja."""
     u = uid
 
     def parlante(clase: str, cx: float, cy: float, aro: float, bajo: bool = False) -> str:
-        goma, cono, tapa = aro * .86, aro * .66, aro * .26
+        goma, cono, tapa = aro * .86, aro * .68, aro * .27
         tornillos = "".join(
             f'<circle cx="{cx + (aro - .45) * dx:.2f}" cy="{cy + (aro - .45) * dy:.2f}" r="{max(.22, aro * .045):.2f}" '
             f'fill="url(#bsm-{u})"/>' for dx, dy in ((.707, .707), (-.707, .707), (.707, -.707), (-.707, -.707)))
-        ondas = (f'<circle class="onda" cx="{cx}" cy="{cy}" r="{aro}" fill="none" stroke="#FF3B1F" stroke-width=".7"/>'
-                 f'<circle class="onda o2" cx="{cx}" cy="{cy}" r="{aro}" fill="none" stroke="#FF7A1A" stroke-width=".5"/>'
+        ondas = (f'<circle class="onda" cx="{cx}" cy="{cy}" r="{aro}" fill="none" stroke="#FF2A1F" stroke-width=".7"/>'
+                 f'<circle class="onda o2" cx="{cx}" cy="{cy}" r="{aro}" fill="none" stroke="#C8102E" stroke-width=".5"/>'
                  if bajo else "")
         return (f'<g class="{clase}">{ondas}'
-                f'<circle cx="{cx}" cy="{cy}" r="{aro}" fill="url(#bsa-{u})" stroke="url(#bsr-{u})" stroke-width=".55"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{aro}" fill="url(#bsa-{u})" stroke="#3c3c40" stroke-width=".45"/>'
                 f'{tornillos}'
                 f'<circle cx="{cx}" cy="{cy}" r="{goma}" fill="url(#bsg-{u})"/>'
                 f'<g class="cono"><circle cx="{cx}" cy="{cy}" r="{cono}" fill="url(#bsc-{u})"/>'
-                f'<circle cx="{cx}" cy="{cy}" r="{cono * .78:.2f}" fill="none" stroke="#fff" stroke-opacity=".05" stroke-width=".3"/>'
-                f'<circle cx="{cx}" cy="{cy}" r="{cono * .56:.2f}" fill="none" stroke="#fff" stroke-opacity=".05" stroke-width=".3"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{cono * .8:.2f}" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".3"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{cono * .6:.2f}" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".3"/>'
                 f'<circle cx="{cx}" cy="{cy}" r="{tapa}" fill="url(#bst-{u})"/>'
                 f'<ellipse cx="{cx - tapa * .35:.2f}" cy="{cy - tapa * .4:.2f}" rx="{tapa * .45:.2f}" ry="{tapa * .28:.2f}" '
-                f'fill="#fff" fill-opacity=".55"/></g>'
+                f'fill="#fff" fill-opacity=".5"/></g>'
                 f'<path d="M{cx - goma * .7:.2f} {cy - goma * .45:.2f} A{goma} {goma} 0 0 1 {cx + goma * .2:.2f} {cy - goma * .98:.2f}" '
-                f'fill="none" stroke="#fff" stroke-opacity=".16" stroke-width=".5" stroke-linecap="round"/></g>')
+                f'fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".5" stroke-linecap="round"/></g>')
 
-    sx, r = 44, 8
-    s_trazo = (f"M{sx + r * 0.766:.2f} {12 - r * 0.643:.2f} A{r} {r} 0 1 0 {sx} 20 "
-               f"A{r} {r} 0 1 1 {sx - r * 0.766:.2f} {28 + r * 0.643:.2f}")
     b_formas = ('<rect x="5" y="3" width="14" height="18.4" rx="2.4"/><circle cx="19" cy="12.2" r="9.2"/>'
                 '<rect x="5" y="17" width="16" height="20" rx="2.4"/><circle cx="21" cy="27.4" r="9.6"/>')
-    return f"""<svg class="bs-b" viewBox="3 0 54 40" role="img" aria-label="BeatStorage LATAM">
+    return f"""<svg class="bs-b" viewBox="3 0 30 40" role="img" aria-label="BeatStorage LATAM">
   <defs>
-    <linearGradient id="bsr-{u}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFA21A"/><stop offset=".45" stop-color="#FF4A12"/><stop offset="1" stop-color="#A3001B"/>
-    </linearGradient>
-    <linearGradient id="bse-{u}" gradientUnits="userSpaceOnUse" x1="5" y1="3" x2="54" y2="37">
-      <stop offset="0" stop-color="#FFA21A"/><stop offset=".45" stop-color="#FF4A12"/><stop offset="1" stop-color="#A3001B"/>
+    <linearGradient id="bse-{u}" gradientUnits="userSpaceOnUse" x1="5" y1="3" x2="31" y2="37">
+      <stop offset="0" stop-color="#5a5a60"/><stop offset=".5" stop-color="#26262a"/><stop offset="1" stop-color="#3a3a3f"/>
     </linearGradient>
     <linearGradient id="bsk-{u}" gradientUnits="userSpaceOnUse" x1="0" y1="3" x2="0" y2="37">
-      <stop offset="0" stop-color="#2c2c30"/><stop offset=".35" stop-color="#141416"/><stop offset="1" stop-color="#050506"/>
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset=".35" stop-color="#121214"/><stop offset="1" stop-color="#040405"/>
     </linearGradient>
     <radialGradient id="bsa-{u}" cx="40%" cy="35%" r="75%">
-      <stop offset="0" stop-color="#3a3a3e"/><stop offset=".7" stop-color="#151517"/><stop offset="1" stop-color="#050505"/>
+      <stop offset="0" stop-color="#2e2e32"/><stop offset=".7" stop-color="#121214"/><stop offset="1" stop-color="#030303"/>
     </radialGradient>
     <radialGradient id="bsg-{u}" cx="50%" cy="50%" r="50%">
-      <stop offset=".72" stop-color="#020202"/><stop offset=".86" stop-color="#2b2b2b"/><stop offset="1" stop-color="#030303"/>
+      <stop offset=".74" stop-color="#020202"/><stop offset=".87" stop-color="#2b2b2b"/><stop offset="1" stop-color="#030303"/>
     </radialGradient>
-    <radialGradient id="bsc-{u}" cx="42%" cy="38%" r="70%">
-      <stop offset="0" stop-color="#2e2e30"/><stop offset=".6" stop-color="#101011"/><stop offset="1" stop-color="#000"/>
+    <radialGradient id="bsc-{u}" cx="42%" cy="38%" r="72%">
+      <stop offset="0" stop-color="#FF4A3A"/><stop offset=".55" stop-color="#D3101F"/><stop offset="1" stop-color="#5E000C"/>
     </radialGradient>
     <radialGradient id="bst-{u}" cx="38%" cy="32%" r="75%">
-      <stop offset="0" stop-color="#FFB547"/><stop offset=".45" stop-color="#FF4A12"/><stop offset="1" stop-color="#6E0010"/>
+      <stop offset="0" stop-color="#8A0A16"/><stop offset=".55" stop-color="#3D0006"/><stop offset="1" stop-color="#120002"/>
     </radialGradient>
     <radialGradient id="bsm-{u}" cx="35%" cy="30%" r="70%">
       <stop offset="0" stop-color="#d9d9d9"/><stop offset="1" stop-color="#4a4a4a"/>
     </radialGradient>
   </defs>
-  <g fill="url(#bse-{u})" stroke="url(#bse-{u})" stroke-width="1.5" stroke-linejoin="round">{b_formas}</g>
+  <g fill="url(#bse-{u})" stroke="url(#bse-{u})" stroke-width="1.2" stroke-linejoin="round">{b_formas}</g>
   <g fill="url(#bsk-{u})">{b_formas}</g>
-  <path d="{s_trazo}" fill="none" stroke="url(#bse-{u})" stroke-width="6.2" stroke-linecap="round"/>
-  <path d="{s_trazo}" fill="none" stroke="url(#bsk-{u})" stroke-width="4.6" stroke-linecap="round"/>
   {parlante("agudo", 19, 12.2, 6.6)}
   {parlante("grave", 21, 27.4, 7.8, bajo=True)}
-  {parlante("s-arriba", sx, 12, 5.2, bajo=True)}
-  {parlante("s-abajo", sx, 28, 5.2)}
 </svg>"""
 
 
