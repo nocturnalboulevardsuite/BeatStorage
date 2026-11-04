@@ -11,11 +11,11 @@ Uso en cualquier vista:
 import numpy as np
 
 
-def ecualizador_html(barras: int = 64, alto: int = 56) -> str:
+def ecualizador_html(barras: int = 64, alto: int = 56, semilla: int = 7) -> str:
     """Ecualizador decorativo: barras por segmentos (rojo abajo, naranjo arriba) que suben y bajan
     lento, cada una a su ritmo, como si estuviera sintonizando una canción."""
     import random
-    azar = random.Random(7)            # siempre el mismo dibujo
+    azar = random.Random(semilla)      # misma semilla, mismo dibujo
     piezas = []
     for i in range(barras):
         # Curva tipo espectro musical: más energía en graves y medios, menos en agudos
