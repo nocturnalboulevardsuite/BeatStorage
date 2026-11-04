@@ -46,7 +46,8 @@ try:
     import core  # noqa: E402
     import db  # noqa: E402
     import styles  # noqa: E402
-    from ecualizador import ecualizador_html  # noqa: E402,F401
+    from config import (ADMIN_WHATSAPP, DATOS_TRANSFERENCIA, DIAS_POR_PLAN,  # noqa: E402
+                        TARIFAS)
     from components import (esc, flujo_pedido, formulario_denuncia, icono,  # noqa: E402
                             insignias, ir_a, tarjeta_servicio)
     from vistas import admin, catalogo, licitaciones, onboarding, panel, servicios  # noqa: E402
@@ -74,7 +75,6 @@ def preparar_bd() -> bool:
 
 
 preparar_bd()
-CON_PLANES = preparar_planes()
 core.tareas_periodicas()
 styles.inyectar_css()
 
@@ -181,10 +181,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 }
 [class*="st-key-nav_"] button * { justify-content: flex-start; }
 [class*="st-key-nav_"] button:hover { background: var(--bs-sup2); color: var(--bs-texto); }
-[class*="st-key-nav_"] button[kind="primary"],
-[class*="st-key-nav_"] button[kind="primary"]:hover { background: var(--bs-sup2) !important; color: var(--bs-texto) !important;
+[data-testid="stSidebar"] [class*="st-key-nav_"] [data-testid="stBaseButton-primary"],
+[data-testid="stSidebar"] [class*="st-key-nav_"] [data-testid="stBaseButton-primary"]:hover { background: var(--bs-sup2) !important; color: var(--bs-texto) !important;
   border: none !important; font-weight: 600; }
-[class*="st-key-nav_"] button[kind="primary"]::before {
+[class*="st-key-nav_"] button[kind="primary"]::before, [class*="st-key-nav_"] [data-testid="stBaseButton-primary"]::before {
   content: ""; position: absolute; left: 5px; top: 26%; bottom: 26%; width: 3px; border-radius: 3px;
   background: var(--espectro-v); background-size: 100% 200%; animation: bs-fluir-v 5s linear infinite;
 }
@@ -304,7 +304,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
   16% { transform: translate(-.25px, .2px) rotate(.4deg); } }
 
 /* ---------- Marcas de verificación y auras ---------- */
-.bs-marca { display: inline-block; width: .95em; height: .95em; vertical-align: -.1em; margin-left: .3em; flex: none; }
+.bs-marca { display: inline-block; width: .95em; height: .95em; vertical-align: -.1em; flex: none;
+  margin: 0 0 0 .3em !important; }   /* Streamlit le pone margen abajo a los svg */
 .bs-aura { position: relative; isolation: isolate; border-radius: 50%; }
 .bs-aura::before, .bs-aura::after { content: ""; position: absolute; border-radius: 50%; z-index: -1;
   background: conic-gradient(from 0deg, var(--aura)); animation: bs-girar 3s linear infinite; }
@@ -366,31 +367,35 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Planes ---------- */
 [class*="st-key-plan_"] { border-radius: 22px !important; padding: 6px 4px; }
-.st-key-plan_usuario { box-shadow: 0 0 0 1px rgba(229, 37, 47, .55), 0 0 28px -6px rgba(229, 37, 47, .45); }
-.st-key-plan_productor { box-shadow: 0 0 0 1px rgba(255, 106, 0, .6), 0 0 32px -6px rgba(255, 106, 0, .5); }
-.bs-plan { text-align: center; padding-top: 6px; }
-.bs-plan .av { width: 64px; height: 64px; margin: 6px auto 14px; }
-.bs-plan .av .foto { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center;
+.st-key-plan_comprador_real { box-shadow: 0 0 0 1px rgba(229, 37, 47, .55), 0 0 28px -6px rgba(229, 37, 47, .45); }
+.st-key-plan_productor_real { box-shadow: 0 0 0 1px rgba(255, 106, 0, .6), 0 0 32px -6px rgba(255, 106, 0, .5); }
+.bs-plan2 { text-align: center; padding-top: 6px; }
+.bs-plan2 .av { width: 64px; height: 64px; margin: 6px auto 14px; }
+.bs-plan2 .av .foto { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center;
   justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.5rem;
   color: var(--bs-texto); border: 3px solid var(--bs-fondo); position: relative; }
-.bs-plan .nom { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.15rem;
+.bs-plan2 .nom { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.15rem;
   letter-spacing: -0.02em; color: var(--bs-texto); white-space: nowrap; }
-.bs-plan .para { color: var(--bs-tenue); font-size: .84rem; margin-top: 2px; }
-.bs-plan .precio { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 2rem;
+.bs-plan2 .para { color: var(--bs-tenue); font-size: .84rem; margin-top: 2px; }
+.bs-plan2 .precio { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 2rem;
   letter-spacing: -0.03em; margin: 14px 0 0; color: var(--bs-texto); font-variant-numeric: tabular-nums; }
-.bs-plan .precio small { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .85rem;
+.bs-plan2 .precio small { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .85rem;
   color: var(--bs-tenue); letter-spacing: 0; margin-left: 4px; }
-.bs-plan ul { list-style: none; padding: 0; margin: 14px 0 6px; text-align: left; }
-.bs-plan li { display: flex; gap: 8px; font-size: .88rem; color: var(--bs-texto); padding: 4px 0; }
-.bs-plan li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; margin-top: .48em;
+.bs-plan2 ul { list-style: none; padding: 0; margin: 14px 0 6px; text-align: left; }
+.bs-plan2 li { display: flex; gap: 8px; font-size: .88rem; color: var(--bs-texto); padding: 4px 0; }
+.bs-plan2 li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; margin-top: .48em;
   background: var(--bs-acento); }
-.st-key-plan_productor .bs-plan li::before { background: #FF6A00; }
-.bs-plan .vence { color: var(--bs-tenue); font-size: .8rem; margin-top: 6px; }
+.st-key-plan_productor_real .bs-plan2 li::before { background: #FF6A00; }
+.bs-plan2 .anual { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .8rem;
+  color: var(--bs-tenue); letter-spacing: 0; margin-top: 4px; }
 
+[class*="st-key-plan_"] [data-testid="stPopover"] button { background: var(--bs-acento) !important;
+  color: #fff !important; border: none !important; }
+[class*="st-key-plan_"] [data-testid="stPopover"] button * { color: #fff !important; }
 /* ---------- Reducir movimiento: la luz se queda quieta ---------- */
 @media (prefers-reduced-motion: reduce) {
   .bs-tira, .bs-tira::after, .bs-progreso div, .bs-portada .barras span, .bs-cover.on,
-  .bs-artista .aro::before, [class*="st-key-nav_"] button[kind="primary"]::before,
+  .bs-artista .aro::before, [class*="st-key-nav_"] [data-testid="stBaseButton-primary"]::before,
   .bs-eq i, .bs-b, .bs-b .cono, .bs-b .onda, .bs-aura::before, .bs-aura::after, .bs-onda-viva rect {
     animation-play-state: paused !important; }
 }
@@ -501,77 +506,15 @@ def tinte(texto: str) -> str:
     return f"background:color-mix(in srgb, var(--led-{n}) 28%, var(--bs-sup2))"
 
 
-# ---- Planes: Free, Usuario verificado ($3.000) y Productor verificado ($5.000), por 30 días
-PLANES = {
-    "free": {"nombre": "Free", "precio": 0, "para": "Para escuchar y comprar",
-             "incluye": ["Escucha todo el catálogo", "Compra beats y servicios", "Publica encargos"]},
-    "usuario": {"nombre": "Usuario verificado", "precio": 3000, "para": "Para que te reconozcan",
-                "incluye": ["Todo lo de Free", "Marca morada junto a tu nombre",
-                            "Aura roja alrededor de tu foto"]},
-    "productor": {"nombre": "Productor verificado", "precio": 5000, "para": "Para vender tu música",
-                  "incluye": ["Todo lo de Usuario verificado", "Vende beats y servicios",
-                              "Marca roja y aura naranja en tu perfil",
-                              "Apareces primero entre los productores"]},
-}
-DIAS_PLAN = 30
-
-
-def clp(monto: int) -> str:
-    return "$" + f"{monto:,}".replace(",", ".")
-
-
-def _escribir(sql: str, params: tuple = ()) -> None:
-    """Escribe en la base de datos con la función que tenga db.py (su nombre varía entre versiones)."""
-    for nombre in ("ejecutar", "ejecuta", "escribir", "modificar", "execute", "run"):
-        funcion = getattr(db, nombre, None)
-        if callable(funcion):
-            funcion(sql, params)
-            return
-    raise RuntimeError("db.py no tiene una función para escribir (por ejemplo db.ejecutar).")
-
-
-@st.cache_resource(show_spinner=False)
-def preparar_planes() -> bool:
-    """Agrega las columnas plan y plan_vence a usuarios (una sola vez). False si no se pudo."""
-    try:
-        columnas = {c["name"] for c in db.todos("PRAGMA table_info(usuarios)")}
-        if "plan" not in columnas:
-            _escribir("ALTER TABLE usuarios ADD COLUMN plan TEXT DEFAULT 'free'")
-        if "plan_vence" not in columnas:
-            _escribir("ALTER TABLE usuarios ADD COLUMN plan_vence TEXT")
-    except Exception:
-        return False
-    return True
-
-
-def plan_activo(u: dict) -> str | None:
-    """'usuario' o 'productor' si la cuenta tiene un plan pagado vigente."""
-    from datetime import date
-    plan, vence = u.get("plan"), u.get("plan_vence")
-    if plan in ("usuario", "productor") and vence and str(vence) >= date.today().isoformat():
-        return plan
-    return None
-
-
-def activar_plan(uid: int, plan: str) -> None:
-    from datetime import date, timedelta
-    if plan == "free":
-        _escribir("UPDATE usuarios SET plan='free', plan_vence=NULL WHERE id=?", (uid,))
-        return
-    vence = (date.today() + timedelta(days=DIAS_PLAN)).isoformat()
-    _escribir("UPDATE usuarios SET plan=?, plan_vence=? WHERE id=?", (plan, vence, uid))
-    if plan == "productor":   # el plan de productor habilita vender
-        _escribir("UPDATE usuarios SET rol='productor' WHERE id=? AND rol='cliente'", (uid,))
-
-
 def _tipo(u: dict) -> str | None:
-    """'productor' o 'usuario' si la cuenta está verificada (por plan o por la verificación de
-    autoría); None si no lo está."""
-    plan = plan_activo(u)
-    if plan:
-        return plan
+    """'productor' o 'usuario' si la cuenta tiene la verificación activa; None si no la tiene.
+    Usa las membresías del proyecto: Productor Real y Comprador Real (core.revisar_membresias
+    apaga 'verificado' cuando vencen)."""
     if not u.get("verificado"):
         return None
+    tipo = u.get("tipo_verificacion")
+    if tipo in ("productor_real", "comprador_real"):
+        return "productor" if tipo == "productor_real" else "usuario"
     return "productor" if u.get("rol") == "productor" else "usuario"
 
 
@@ -829,9 +772,7 @@ def vista_productores(usuario: dict | None) -> None:
     if busqueda.strip():
         sql += " AND (u.username LIKE ? OR u.nombre_publico LIKE ? OR u.pais LIKE ?)"
         params = (f"%{busqueda.strip()}%",) * 3
-    orden = ("(u.verificado OR (u.plan='productor' AND u.plan_vence >= date('now'))) DESC"
-             if CON_PLANES else "u.verificado DESC")
-    artistas = db.todos(sql + f" ORDER BY {orden}, plays DESC", params)
+    artistas = db.todos(sql + " ORDER BY u.verificado DESC, plays DESC", params)
     if not artistas:
         st.caption("No encontramos productores con esa búsqueda.")
         return
@@ -882,7 +823,7 @@ def perfil_productor(pid: int, usuario: dict | None) -> None:
         f'<div class="bs-cabecera"><div class="bs-av{aura_clase(p)}"><div class="foto" style="{tinte(p["username"])}">'
         f'{foto_html(p)}</div></div><div><h1>{esc(p["nombre_publico"] or p["username"])}{marca_html(p)}</h1>'
         f'<div class="lugar">@{esc(p["username"])} {icono("pin")} {esc(p["pais"] or "LATAM")} '
-        f'{insignias(p, con_ia=bool(ob and ob["usa_ia"]))}</div></div></div>',
+        f'{insignias({**p, "verificado": 0}, con_ia=bool(ob and ob["usa_ia"]))}</div></div></div>',
         unsafe_allow_html=True)
 
     # ---- Acciones principales ----
@@ -1060,63 +1001,116 @@ def pagina_login() -> None:
 
 
 # ----------------------------------------------------------------------------
-# 8b. Planes
+# 8b. Planes (usa las membresías del proyecto: core.solicitar_membresia + aprobación del admin)
 # ----------------------------------------------------------------------------
-def _elegir_plan(uid: int, plan: str) -> None:
-    try:
-        activar_plan(uid, plan)
-        st.session_state["aviso_plan"] = ("Listo: ahora tienes el plan " + PLANES[plan]["nombre"] + "."
-                                          if plan != "free" else "Volviste al plan Free.")
-    except Exception as error:
-        st.session_state["aviso_plan"] = f"No se pudo cambiar el plan: {error}"
+PLANES = {
+    "free": {"nombre": "Free", "para": "Para escuchar y comprar",
+             "incluye": ["Escucha todo el catálogo", "Compra beats y servicios", "Publica encargos"]},
+    "comprador_real": {"nombre": "Usuario verificado", "para": "Para que te reconozcan",
+                       "incluye": ["Todo lo de Free", "Marca morada y aura roja en tu perfil",
+                                   "Los productores saben que eres una persona real",
+                                   "Tus encargos aparecen primero"]},
+    "productor_real": {"nombre": "Productor verificado", "para": "Para vender tu música",
+                       "incluye": ["Marca roja y aura naranja en tu perfil",
+                                   "Apareces primero en el catálogo y en Productores",
+                                   "Subes beats en WAV con calidad original",
+                                   "Requiere aprobar la verificación de autoría"]},
+}
+
+
+def clp(monto: int) -> str:
+    return "$" + f"{monto:,}".replace(",", ".")
+
+
+def _hacerme_productor(uid: int) -> None:
+    """Pasa una cuenta de cliente a productor. Igual que al registrarse como productor, parte
+    pendiente hasta aprobar la verificación de autoría y subir sus beats."""
+    db.ejecutar("UPDATE usuarios SET rol='productor', estado='pendiente_verificacion' "
+                "WHERE id=? AND rol='cliente'", (uid,))
+    st.session_state["nav"] = "verificacion"
+
+
+def _ir_a_verificacion() -> None:
+    st.session_state["nav"] = "verificacion"
+
+
+def _formulario_pago(usuario: dict, tipo: str) -> None:
+    with st.popover("Elegir plan", width="stretch"):
+        with st.form(f"plan_form_{tipo}", border=False):
+            plan = st.radio("Duración", ["mensual", "anual"], horizontal=True,
+                            format_func=lambda p: f"{p.capitalize()}: {clp(TARIFAS[tipo][p])}")
+            st.caption(f"Transfiere a: {DATOS_TRANSFERENCIA}")
+            ref = st.text_input("Número de operación de la transferencia")
+            if st.form_submit_button("Ya transferí, activar", type="primary", width="stretch"):
+                ok, msg = core.solicitar_membresia(usuario, plan, ref)
+                st.session_state["aviso_plan"] = msg
+                if ok:
+                    st.rerun()
+                st.error(msg)
+        st.link_button("Enviar comprobante por WhatsApp", width="stretch",
+                       url=f"https://wa.me/{ADMIN_WHATSAPP}?text=Comprobante%20plan%20"
+                           f"{PLANES[tipo]['nombre'].replace(' ', '%20')}%20usuario%20{usuario['username']}")
 
 
 def pagina_planes(usuario: dict) -> None:
     st.markdown('<div class="bs-hero"><h1>Planes</h1>'
-                '<p>Verifica tu cuenta y destaca en BeatStorage. Cada plan dura 30 días.</p></div>',
-                unsafe_allow_html=True)
-    if not CON_PLANES:
-        st.warning("No se pudieron crear las columnas de planes en la base de datos. "
-                   "Revisa que db.py tenga una función para escribir (por ejemplo db.ejecutar).")
-        return
+                '<p>Verifica tu cuenta y destaca en BeatStorage.</p></div>', unsafe_allow_html=True)
     if aviso := st.session_state.pop("aviso_plan", None):
         st.toast(aviso, icon=":material/workspace_premium:")
 
-    actual = plan_activo(usuario) or "free"
+    actual = usuario["tipo_verificacion"] if usuario["verificado"] else "free"
+    mi_tipo = core.tipo_membresia_para(usuario["rol"])          # plan que corresponde a su cuenta
+    pendiente = db.uno("SELECT * FROM membresias WHERE usuario_id=? AND estado='pendiente_pago'",
+                       (usuario["id"],))
+    ob = core.onboarding_de(usuario["id"]) if usuario["rol"] == "productor" else None
     inicial = esc((usuario["nombre_publico"] or usuario["username"])[:1].upper())
+
     st.write("")
-    columnas = st.columns(3, gap="medium")
-    for col, (clave, plan) in zip(columnas, PLANES.items()):
-        ejemplo = {"plan": clave, "plan_vence": "9999-12-31"}
-        nombre = plan["nombre"] + marca_html(ejemplo)
-        precio = (f'{clp(plan["precio"])}<small>CLP al mes</small>' if plan["precio"]
-                  else '$0<small>siempre</small>')
+    for col, (clave, plan) in zip(st.columns(3, gap="medium"), PLANES.items()):
+        ejemplo = {"verificado": 1, "tipo_verificacion": clave} if clave != "free" else {}
+        if clave == "free":
+            precio = '$0<small>siempre</small>'
+        else:
+            precio = (f'{clp(TARIFAS[clave]["mensual"])}<small>CLP al mes</small>'
+                      f'<div class="anual">o {clp(TARIFAS[clave]["anual"])} al año</div>')
         with col, st.container(border=True, key=f"plan_{clave}"):
             st.markdown(
-                f'<div class="bs-plan"><div class="av{aura_clase(ejemplo)}">'
+                f'<div class="bs-plan2"><div class="av{aura_clase(ejemplo)}">'
                 f'<div class="foto" style="{tinte(usuario["username"])}">{inicial}</div></div>'
-                f'<div class="nom">{nombre}</div><div class="para">{plan["para"]}</div>'
-                f'<div class="precio">{precio}</div>'
+                f'<div class="nom">{plan["nombre"]}{marca_html(ejemplo)}</div>'
+                f'<div class="para">{plan["para"]}</div><div class="precio">{precio}</div>'
                 '<ul>' + "".join(f"<li>{x}</li>" for x in plan["incluye"]) + '</ul></div>',
                 unsafe_allow_html=True)
+
             if clave == actual:
                 st.button("Tu plan actual", key=f"plan_actual_{clave}", width="stretch", disabled=True)
                 if clave != "free":
-                    st.markdown(f'<div class="bs-plan"><div class="vence">Vence el '
-                                f'{esc(str(usuario.get("plan_vence")))}</div></div>', unsafe_allow_html=True)
-                    st.button("Cancelar plan", key="plan_cancelar", type="tertiary", width="stretch",
-                              on_click=_elegir_plan, args=(usuario["id"], "free"))
+                    st.caption(f"Vence el {core.fecha_corta(usuario['verificado_hasta'])}. "
+                               "Si renuevas antes, se suman los días.")
+                    if not pendiente:
+                        _formulario_pago(usuario, clave)
             elif clave == "free":
-                st.button("Pasar a Free", key="plan_free", width="stretch",
-                          on_click=_elegir_plan, args=(usuario["id"], "free"))
+                st.caption("Vuelves a Free cuando vence tu plan.")
+            elif pendiente and pendiente["tipo"] == clave:
+                st.info(f"Solicitud en revisión ({pendiente['plan']}, {clp(pendiente['monto_clp'])}). "
+                        "La activamos apenas confirmemos tu transferencia.")
+            elif clave != mi_tipo:
+                if clave == "productor_real" and usuario["rol"] == "cliente":
+                    st.caption("Este plan es para productores. Primero verificas tu autoría y "
+                               "luego puedes activarlo.")
+                    st.button("Convertirme en productor", key="plan_hacerme_prod", width="stretch",
+                              on_click=_hacerme_productor, args=(usuario["id"],))
+                else:
+                    st.caption("Este plan es para cuentas que compran y encargan música.")
+            elif clave == "productor_real" and (not ob or ob["estado_revision"] != "aprobado"):
+                st.caption("Para activarlo, primero aprueba la verificación de autoría.")
+                st.button("Ir a verificación", key="plan_ir_verif", width="stretch",
+                          on_click=_ir_a_verificacion)
             else:
-                with st.popover("Elegir plan", width="stretch", type="primary"):
-                    st.markdown(f"**{plan['nombre']}**: {clp(plan['precio'])} CLP por {DIAS_PLAN} días.")
-                    if clave == "productor" and usuario["rol"] == "cliente":
-                        st.caption("Tu cuenta pasará a ser de productor para que puedas vender.")
-                    st.caption("Pago de prueba: por ahora no se cobra dinero real.")
-                    st.button("Confirmar pago", key=f"plan_pagar_{clave}", type="primary", width="stretch",
-                              on_click=_elegir_plan, args=(usuario["id"], clave))
+                _formulario_pago(usuario, clave)
+
+    st.caption(f"Pagas por transferencia y activamos tu plan apenas la confirmamos. "
+               f"El plan mensual dura {DIAS_POR_PLAN['mensual']} días y el anual {DIAS_POR_PLAN['anual']}.")
 
 
 # ----------------------------------------------------------------------------
@@ -1163,7 +1157,7 @@ def bloque_usuario(usuario: dict) -> None:
         f'<div class="bs-cuenta"><span class="{aura_clase(usuario).strip()}">'
         f'<div class="bs-cuenta-avatar">{esc(nombre[:1].upper())}</div></span>'
         f'<div class="bs-cuenta-datos"><b>{nombre}{marca_html(usuario)}</b><small>@{esc(usuario["username"])}</small></div></div>'
-        f'<div class="bs-cuenta-extra">{insignias(usuario)}{avisos}</div>', unsafe_allow_html=True)
+        f'<div class="bs-cuenta-extra">{avisos}</div>', unsafe_allow_html=True)
 
 
 _SVG_ITEMS = {
