@@ -165,7 +165,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Logo (monocromo: la luz queda para la música) ---------- */
 .bs-logo2 { display: flex; align-items: center; gap: 10px; margin: .2rem 0 1.8rem; }
-.bs-logo2 svg { width: 30px; height: 30px; flex: none; }
+.bs-logo2 svg { height: 30px; width: auto; aspect-ratio: 54 / 40; flex: none; }
 .bs-logo2 .nombre { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
   font-size: 1.22rem; letter-spacing: -0.04em; color: var(--bs-texto); line-height: 1; }
 .bs-logo2 .region { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .8rem;
@@ -251,7 +251,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Registro e inicio de sesión ---------- */
 .bs-acceso { text-align: center; margin: 1.8rem 0 1.5rem; }
-.bs-acceso svg { width: 38px; height: 38px; }
+.bs-acceso svg { height: 40px; width: auto; aspect-ratio: 54 / 40; }
 .bs-acceso .titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.04em;
   font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.08; margin: .9rem 0 0; text-wrap: balance; }
 .bs-acceso p { color: var(--bs-tenue); margin: .5rem 0 0; }
@@ -282,6 +282,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .bs-b .cono { transform-box: fill-box; transform-origin: center; }
 .bs-b .grave .cono { animation: bs-golpe .5s cubic-bezier(.2,.9,.3,1) infinite; }
 .bs-b .agudo .cono { animation: bs-agudo .25s ease-in-out infinite; }
+.bs-b .s-arriba .cono { animation: bs-golpe .5s cubic-bezier(.2,.9,.3,1) infinite; animation-delay: -.25s; }
+.bs-b .s-abajo .cono { animation: bs-agudo .25s ease-in-out infinite; animation-delay: -.12s; }
 @keyframes bs-golpe { 0% { transform: scale(1); } 10% { transform: scale(1.14); } 26% { transform: scale(.95); }
   45%, 100% { transform: scale(1); } }
 @keyframes bs-agudo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
@@ -314,7 +316,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 
 /* ---------- Portada de inicio (sin sesión) ---------- */
 .bs-portal { text-align: center; padding: 8vh 0 1.4rem; }
-.bs-portal svg { width: 128px; height: 128px; filter: drop-shadow(0 12px 32px rgba(229, 37, 47, .35)); }
+.bs-portal svg { height: 120px; width: auto; aspect-ratio: 54 / 40; filter: drop-shadow(0 12px 32px rgba(229, 37, 47, .35)); }
 .bs-portal .marca { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.05em;
   font-size: clamp(2.3rem, 6vw, 3.4rem); line-height: 1; margin-top: 1.2rem; color: var(--bs-texto); }
 .bs-portal .marca span { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .36em;
@@ -324,13 +326,15 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .bs-que .titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.04em;
   font-size: clamp(1.6rem, 3.6vw, 2.2rem); line-height: 1.1; color: var(--bs-texto); }
 .bs-que .intro { color: var(--bs-tenue); max-width: 60ch; line-height: 1.6; margin: .8rem 0 0; }
-.bs-que .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 2.2rem; }
+.bs-que { max-width: 560px !important; }
+.bs-que .tres { display: flex; flex-direction: column; gap: 24px; margin-top: 2rem; }
+.bs-que .tres > div { display: grid; grid-template-columns: 22px 1fr; column-gap: 14px; }
+.bs-que .tres > div svg { grid-row: span 2; margin-top: .55rem; }
 .bs-que .tres svg { width: 22px; height: 22px; color: var(--bs-acento-t); }
 .bs-que .tres b { display: block; margin: .5rem 0 .3rem; font-size: 1rem; color: var(--bs-texto); }
 .bs-que .tres p { color: var(--bs-tenue); font-size: .9rem; line-height: 1.55; margin: 0; }
 .bs-que .leyenda { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 2.4rem; color: var(--bs-tenue); font-size: .86rem; }
 .bs-que .leyenda span { display: inline-flex; align-items: center; gap: 2px; }
-@media (max-width: 720px) { .bs-que .tres { grid-template-columns: 1fr; gap: 22px; } }
 
 /* ---------- Reducir movimiento: la luz se queda quieta ---------- */
 @media (prefers-reduced-motion: reduce) {
@@ -363,14 +367,20 @@ st.markdown(_CSS
 #    (beat + almacenamiento de música). El hueco del disco es transparente.
 # ----------------------------------------------------------------------------
 def logo_svg(uid: str = "l") -> str:
-    """Una B roja cuyos dos huecos son parlantes negros; los conos vibran como si sonara algo."""
+    """Las letras B y S hechas de parlantes negros con rojo que vibran como si sonara algo.
+    B: sus dos huecos son parlantes. S: su trazo envuelve dos parlantes, uno arriba y otro abajo."""
     def parlante(clase: str, cx: float, cy: float, borde: float, cono: float, tapa: float) -> str:
-        return (f'<g class="{clase}"><circle cx="{cx}" cy="{cy}" r="{borde}" fill="#0a0a0a"/>'
+        return (f'<g class="{clase}"><circle cx="{cx}" cy="{cy}" r="{borde}" fill="#0a0a0a" '
+                f'stroke="{ROJO}" stroke-width=".5"/>'
                 f'<g class="cono"><circle cx="{cx}" cy="{cy}" r="{cono}" fill="url(#bsc-{uid})" '
                 f'stroke="{ROJO}" stroke-width=".55"/>'
                 f'<circle cx="{cx}" cy="{cy}" r="{cono * .62:.2f}" fill="none" stroke="#2a2a2a" stroke-width=".4"/>'
                 f'<circle cx="{cx}" cy="{cy}" r="{tapa}" fill="{ROJO}"/></g></g>')
-    return f"""<svg class="bs-b" viewBox="0 0 40 40" role="img" aria-label="BeatStorage LATAM">
+    # S: arco alrededor del parlante de arriba (abre a la derecha) y del de abajo (abre a la izquierda)
+    sx, r = 44, 8
+    s_trazo = (f"M{sx + r * 0.766:.2f} {12 - r * 0.643:.2f} A{r} {r} 0 1 0 {sx} 20 "
+               f"A{r} {r} 0 1 1 {sx - r * 0.766:.2f} {28 + r * 0.643:.2f}")
+    return f"""<svg class="bs-b" viewBox="3 0 54 40" role="img" aria-label="BeatStorage LATAM">
   <defs><radialGradient id="bsc-{uid}" cx="45%" cy="40%" r="65%">
     <stop offset="0" stop-color="#3b3b3b"/><stop offset=".55" stop-color="#141414"/><stop offset="1" stop-color="#000"/>
   </radialGradient></defs>
@@ -380,6 +390,9 @@ def logo_svg(uid: str = "l") -> str:
   </g>
   {parlante("agudo", 19, 12.2, 6, 4.7, 1.6)}
   {parlante("grave", 21, 27.4, 7.2, 5.7, 2.1)}
+  <path d="{s_trazo}" fill="none" stroke="{ROJO}" stroke-width="5" stroke-linecap="round"/>
+  {parlante("s-arriba", sx, 12, 5, 3.9, 1.3)}
+  {parlante("s-abajo", sx, 28, 5, 3.9, 1.3)}
 </svg>"""
 
 
@@ -808,8 +821,18 @@ def _problemas_clave(clave: str) -> list[str]:
     return faltan
 
 
+CORREO_INTERNO = "sin-correo.invalid"
+
+
+def correo_interno(nick: str) -> str:
+    """Correo de relleno, único por cuenta, para quien se registra sin correo."""
+    import secrets
+    base = "".join(ch for ch in nick.lower() if ch.isalnum()) or "usuario"
+    return f"{base}.{secrets.token_hex(3)}@{CORREO_INTERNO}"
+
+
 def pagina_registro() -> None:
-    """Registro en una sola pantalla: nickname, contraseña dos veces y correo opcional.
+    """Registro en una sola pantalla: nombre de usuario, contraseña dos veces y correo opcional.
     Al crear la cuenta se inicia sesión de inmediato."""
     _, centro, _ = st.columns([1, 1.2, 1])
     with centro:
@@ -817,7 +840,7 @@ def pagina_registro() -> None:
                   on_click=abrir_acceso, args=(None,))
         _cabecera_acceso("Regístrate")
         with st.form("registro", border=False):
-            nick = st.text_input("Nickname", max_chars=24, placeholder="tu_nombre")
+            nick = st.text_input("Nombre de usuario", max_chars=24, placeholder="tu_nombre")
             clave = st.text_input("Contraseña", type="password",
                                   help="Mínimo 8 caracteres, con al menos una letra y un número.")
             clave2 = st.text_input("Repite la contraseña", type="password")
@@ -827,7 +850,7 @@ def pagina_registro() -> None:
                 nick, email = nick.strip(), email.strip().lower()
                 faltan = _problemas_clave(clave)
                 if not nick:
-                    st.error("Escribe un nickname.")
+                    st.error("Escribe un nombre de usuario.")
                 elif faltan:
                     st.error("La contraseña necesita " + ", ".join(faltan) + ".")
                 elif clave != clave2:
@@ -837,7 +860,9 @@ def pagina_registro() -> None:
                 elif email and db.uno("SELECT id FROM usuarios WHERE email=?", (email,)):
                     st.error("Ese correo ya tiene una cuenta. Inicia sesión.")
                 else:
-                    ok, res = auth.crear_usuario(nick, email, clave, "cliente",
+                    # auth.crear_usuario exige un correo; si no se escribió, se usa uno interno
+                    # que nunca recibe mensajes (el dominio .invalid está reservado para eso).
+                    ok, res = auth.crear_usuario(nick, email or correo_interno(nick), clave, "cliente",
                                                  nombre_publico=nick, pais="", whatsapp="")
                     if ok:   # sesión iniciada de una
                         st.session_state["uid"] = res
@@ -857,7 +882,7 @@ def pagina_login() -> None:
                   on_click=abrir_acceso, args=(None,))
         _cabecera_acceso("Inicia sesión en BeatStorage")
         with st.form("login", border=False):
-            u = st.text_input("Nickname o correo")
+            u = st.text_input("Nombre de usuario o correo")
             p = st.text_input("Contraseña", type="password")
             if st.form_submit_button("Iniciar sesión", type="primary", width="stretch"):
                 encontrado, error = auth.autenticar(u, p)
@@ -936,16 +961,15 @@ def _item(clave: str, titulo: str, texto: str) -> str:
 
 def pagina_inicio() -> None:
     """Primera pantalla sin sesión: el logo, las dos entradas y qué es BeatStorage."""
-    _, centro, _ = st.columns([1, 1.5, 1])
+    _, centro, _ = st.columns([1, 1.1, 1])
     with centro:
         st.markdown(f'<div class="bs-portal">{logo_svg("portal")}'
                     '<div class="marca">beatstorage<span>latam</span></div>'
                     '<p>Beats de productores latinoamericanos, listos para tu próxima canción.</p></div>',
                     unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        c1.button("Iniciar sesión", type="primary", width="stretch", key="portal_login",
+        st.button("Iniciar sesión", type="primary", width="stretch", key="portal_login",
                   on_click=abrir_acceso, args=("login",))
-        c2.button("Registrarse", width="stretch", key="portal_registro",
+        st.button("Registrarse", width="stretch", key="portal_registro",
                   on_click=abrir_acceso, args=("registro",))
 
     ejemplo_p = {"verificado": 1, "rol": "productor"}
