@@ -166,9 +166,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 /* ---------- Logo (monocromo: la luz queda para la música) ---------- */
 .bs-logo2 { display: flex; align-items: center; gap: 10px; margin: .2rem 0 1.8rem; }
 .bs-logo2 svg { height: 30px; width: auto; aspect-ratio: 54 / 40; flex: none; }
-.bs-logo2 .nombre { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
+.bs-logo2 .nombre { white-space: nowrap; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
   font-size: 1.22rem; letter-spacing: -0.04em; color: var(--bs-texto); line-height: 1; }
-.bs-logo2 .region { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .8rem;
+.bs-logo2 .region { display: inline-block; white-space: nowrap; font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .8rem;
   color: var(--bs-tenue); margin-left: 5px; letter-spacing: 0; }
 
 /* ---------- Navegación lateral: la página activa lleva una luz LED ---------- */
@@ -328,9 +328,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 /* ---------- Portada de inicio (sin sesión) ---------- */
 .bs-portal { text-align: center; padding: 8vh 0 1.4rem; }
 .bs-portal svg { height: 120px; width: auto; aspect-ratio: 54 / 40; }
-.bs-portal .marca { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.05em;
-  font-size: clamp(2.3rem, 6vw, 3.4rem); line-height: 1; margin-top: 1.2rem; color: var(--bs-texto); }
-.bs-portal .marca span { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .36em;
+.bs-portal .marca { white-space: nowrap; overflow-wrap: normal; word-break: keep-all;
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.05em;
+  font-size: clamp(1.9rem, 9vw, 3.4rem); line-height: 1; margin-top: 1.2rem; color: var(--bs-texto); }
+.bs-portal .marca span { display: inline-block; white-space: nowrap;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .36em;
   letter-spacing: 0; color: var(--bs-tenue); margin-left: .45em; }
 .bs-portal p { color: var(--bs-tenue); max-width: 34ch; margin: .8rem auto 0; line-height: 1.5; font-size: 1.02rem; }
 .bs-que { max-width: 840px; margin: 12vh auto 3rem; padding-top: 2.4rem; border-top: 1px solid var(--bs-borde); }
@@ -1012,12 +1014,13 @@ def _item(clave: str, titulo: str, texto: str) -> str:
 
 def pagina_inicio() -> None:
     """Primera pantalla sin sesión: el logo, las dos entradas y qué es BeatStorage."""
+    # El logo y el nombre van a todo el ancho para que "beatstorage latam" nunca se corte.
+    st.markdown(f'<div class="bs-portal">{logo_svg("portal")}'
+                '<div class="marca">beatstorage<span>latam</span></div>'
+                '<p>Beats de productores latinoamericanos, listos para tu próxima canción.</p></div>',
+                unsafe_allow_html=True)
     _, centro, _ = st.columns([1, 1.1, 1])
     with centro:
-        st.markdown(f'<div class="bs-portal">{logo_svg("portal")}'
-                    '<div class="marca">beatstorage<span>latam</span></div>'
-                    '<p>Beats de productores latinoamericanos, listos para tu próxima canción.</p></div>',
-                    unsafe_allow_html=True)
         st.button("Iniciar sesión", type="primary", width="stretch", key="portal_login",
                   on_click=abrir_acceso, args=("login",))
         st.button("Registrarse", width="stretch", key="portal_registro",
