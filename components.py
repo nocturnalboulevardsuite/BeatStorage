@@ -59,13 +59,11 @@ def ir_a(pagina: str, **extra) -> None:
 # Encabezado: título, una línea y la forma de onda (elemento de marca)
 # ----------------------------------------------------------------------------
 def encabezado(titulo: str, subtitulo: str = "", semilla: int = 7) -> None:
-    rng = random.Random(semilla)
-    barras = "".join(
-        f'<span style="height:{rng.randint(15, 100)}%;animation-delay:{i * 10}ms"></span>'
-        for i in range(72))
+    """Título, una línea y un ecualizador que se mueve lento, como sintonizando música."""
+    from ecualizador import ecualizador_html
     sub = f"<p>{esc(subtitulo)}</p>" if subtitulo else ""
     st.markdown(f'<div class="bs-hero"><h1>{esc(titulo)}</h1>{sub}'
-                f'<div class="bs-onda" aria-hidden="true">{barras}</div></div>',
+                f'{ecualizador_html(72, 40, semilla)}</div>',
                 unsafe_allow_html=True)
 
 
