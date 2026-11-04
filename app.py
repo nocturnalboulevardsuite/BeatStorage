@@ -46,6 +46,7 @@ try:
     import core  # noqa: E402
     import db  # noqa: E402
     import styles  # noqa: E402
+    from ecualizador import ecualizador_html  # noqa: E402,F401
     from components import (esc, flujo_pedido, formulario_denuncia, icono,  # noqa: E402
                             insignias, ir_a, tarjeta_servicio)
     from vistas import admin, catalogo, licitaciones, onboarding, panel, servicios  # noqa: E402
@@ -73,6 +74,7 @@ def preparar_bd() -> bool:
 
 
 preparar_bd()
+CON_PLANES = preparar_planes()
 core.tareas_periodicas()
 styles.inyectar_css()
 
@@ -349,11 +351,47 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .bs-que .leyenda { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 2.4rem; color: var(--bs-tenue); font-size: .86rem; }
 .bs-que .leyenda span { display: inline-flex; align-items: center; gap: 2px; }
 
+/* ---------- Ecualizador que se mueve lento, como sintonizando ---------- */
+.bs-eq { display: flex; align-items: flex-end; gap: 3px; margin: 14px 0 6px; }
+.bs-eq i { flex: 1; height: 100%; border-radius: 2px;
+  background: linear-gradient(to top, #A3001B 0%, #E5252F 45%, #FF5A1F 75%, #FFA21A 100%);
+  -webkit-mask: repeating-linear-gradient(to top, #000 0 3px, transparent 3px 5px);
+          mask: repeating-linear-gradient(to top, #000 0 3px, transparent 3px 5px);
+  clip-path: inset(calc(100% - var(--a)) 0 0 0);
+  animation: bs-eq 3s ease-in-out infinite alternate; }
+@keyframes bs-eq {
+  0%   { clip-path: inset(calc(100% - var(--a)) 0 0 0); }
+  50%  { clip-path: inset(calc(100% - var(--b)) 0 0 0); }
+  100% { clip-path: inset(calc(100% - var(--c)) 0 0 0); } }
+
+/* ---------- Planes ---------- */
+[class*="st-key-plan_"] { border-radius: 22px !important; padding: 6px 4px; }
+.st-key-plan_usuario { box-shadow: 0 0 0 1px rgba(229, 37, 47, .55), 0 0 28px -6px rgba(229, 37, 47, .45); }
+.st-key-plan_productor { box-shadow: 0 0 0 1px rgba(255, 106, 0, .6), 0 0 32px -6px rgba(255, 106, 0, .5); }
+.bs-plan { text-align: center; padding-top: 6px; }
+.bs-plan .av { width: 64px; height: 64px; margin: 6px auto 14px; }
+.bs-plan .av .foto { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.5rem;
+  color: var(--bs-texto); border: 3px solid var(--bs-fondo); position: relative; }
+.bs-plan .nom { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.15rem;
+  letter-spacing: -0.02em; color: var(--bs-texto); white-space: nowrap; }
+.bs-plan .para { color: var(--bs-tenue); font-size: .84rem; margin-top: 2px; }
+.bs-plan .precio { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 2rem;
+  letter-spacing: -0.03em; margin: 14px 0 0; color: var(--bs-texto); font-variant-numeric: tabular-nums; }
+.bs-plan .precio small { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .85rem;
+  color: var(--bs-tenue); letter-spacing: 0; margin-left: 4px; }
+.bs-plan ul { list-style: none; padding: 0; margin: 14px 0 6px; text-align: left; }
+.bs-plan li { display: flex; gap: 8px; font-size: .88rem; color: var(--bs-texto); padding: 4px 0; }
+.bs-plan li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; margin-top: .48em;
+  background: var(--bs-acento); }
+.st-key-plan_productor .bs-plan li::before { background: #FF6A00; }
+.bs-plan .vence { color: var(--bs-tenue); font-size: .8rem; margin-top: 6px; }
+
 /* ---------- Reducir movimiento: la luz se queda quieta ---------- */
 @media (prefers-reduced-motion: reduce) {
   .bs-tira, .bs-tira::after, .bs-progreso div, .bs-portada .barras span, .bs-cover.on,
   .bs-artista .aro::before, [class*="st-key-nav_"] button[kind="primary"]::before,
-  .bs-b, .bs-b .cono, .bs-b .onda, .bs-aura::before, .bs-aura::after, .bs-onda-viva rect {
+  .bs-eq i, .bs-b, .bs-b .cono, .bs-b .onda, .bs-aura::before, .bs-aura::after, .bs-onda-viva rect {
     animation-play-state: paused !important; }
 }
 </style>
@@ -463,11 +501,78 @@ def tinte(texto: str) -> str:
     return f"background:color-mix(in srgb, var(--led-{n}) 28%, var(--bs-sup2))"
 
 
+# ---- Planes: Free, Usuario verificado ($3.000) y Productor verificado ($5.000), por 30 días
+PLANES = {
+    "free": {"nombre": "Free", "precio": 0, "para": "Para escuchar y comprar",
+             "incluye": ["Escucha todo el catálogo", "Compra beats y servicios", "Publica encargos"]},
+    "usuario": {"nombre": "Usuario verificado", "precio": 3000, "para": "Para que te reconozcan",
+                "incluye": ["Todo lo de Free", "Marca morada junto a tu nombre",
+                            "Aura roja alrededor de tu foto"]},
+    "productor": {"nombre": "Productor verificado", "precio": 5000, "para": "Para vender tu música",
+                  "incluye": ["Todo lo de Usuario verificado", "Vende beats y servicios",
+                              "Marca roja y aura naranja en tu perfil",
+                              "Apareces primero entre los productores"]},
+}
+DIAS_PLAN = 30
+
+
+def clp(monto: int) -> str:
+    return "$" + f"{monto:,}".replace(",", ".")
+
+
+def _escribir(sql: str, params: tuple = ()) -> None:
+    """Escribe en la base de datos con la función que tenga db.py (su nombre varía entre versiones)."""
+    for nombre in ("ejecutar", "ejecuta", "escribir", "modificar", "execute", "run"):
+        funcion = getattr(db, nombre, None)
+        if callable(funcion):
+            funcion(sql, params)
+            return
+    raise RuntimeError("db.py no tiene una función para escribir (por ejemplo db.ejecutar).")
+
+
+@st.cache_resource(show_spinner=False)
+def preparar_planes() -> bool:
+    """Agrega las columnas plan y plan_vence a usuarios (una sola vez). False si no se pudo."""
+    try:
+        columnas = {c["name"] for c in db.todos("PRAGMA table_info(usuarios)")}
+        if "plan" not in columnas:
+            _escribir("ALTER TABLE usuarios ADD COLUMN plan TEXT DEFAULT 'free'")
+        if "plan_vence" not in columnas:
+            _escribir("ALTER TABLE usuarios ADD COLUMN plan_vence TEXT")
+    except Exception:
+        return False
+    return True
+
+
+def plan_activo(u: dict) -> str | None:
+    """'usuario' o 'productor' si la cuenta tiene un plan pagado vigente."""
+    from datetime import date
+    plan, vence = u.get("plan"), u.get("plan_vence")
+    if plan in ("usuario", "productor") and vence and str(vence) >= date.today().isoformat():
+        return plan
+    return None
+
+
+def activar_plan(uid: int, plan: str) -> None:
+    from datetime import date, timedelta
+    if plan == "free":
+        _escribir("UPDATE usuarios SET plan='free', plan_vence=NULL WHERE id=?", (uid,))
+        return
+    vence = (date.today() + timedelta(days=DIAS_PLAN)).isoformat()
+    _escribir("UPDATE usuarios SET plan=?, plan_vence=? WHERE id=?", (plan, vence, uid))
+    if plan == "productor":   # el plan de productor habilita vender
+        _escribir("UPDATE usuarios SET rol='productor' WHERE id=? AND rol='cliente'", (uid,))
+
+
 def _tipo(u: dict) -> str | None:
-    """'productor' o 'usuario' si la cuenta está verificada; None si no lo está."""
-    if not (u.get("verificado") if hasattr(u, "get") else u["verificado"]):
+    """'productor' o 'usuario' si la cuenta está verificada (por plan o por la verificación de
+    autoría); None si no lo está."""
+    plan = plan_activo(u)
+    if plan:
+        return plan
+    if not u.get("verificado"):
         return None
-    return "productor" if u["rol"] == "productor" else "usuario"
+    return "productor" if u.get("rol") == "productor" else "usuario"
 
 
 def marca_html(u: dict) -> str:
@@ -724,7 +829,9 @@ def vista_productores(usuario: dict | None) -> None:
     if busqueda.strip():
         sql += " AND (u.username LIKE ? OR u.nombre_publico LIKE ? OR u.pais LIKE ?)"
         params = (f"%{busqueda.strip()}%",) * 3
-    artistas = db.todos(sql + " ORDER BY u.verificado DESC, plays DESC", params)
+    orden = ("(u.verificado OR (u.plan='productor' AND u.plan_vence >= date('now'))) DESC"
+             if CON_PLANES else "u.verificado DESC")
+    artistas = db.todos(sql + f" ORDER BY {orden}, plays DESC", params)
     if not artistas:
         st.caption("No encontramos productores con esa búsqueda.")
         return
@@ -953,6 +1060,66 @@ def pagina_login() -> None:
 
 
 # ----------------------------------------------------------------------------
+# 8b. Planes
+# ----------------------------------------------------------------------------
+def _elegir_plan(uid: int, plan: str) -> None:
+    try:
+        activar_plan(uid, plan)
+        st.session_state["aviso_plan"] = ("Listo: ahora tienes el plan " + PLANES[plan]["nombre"] + "."
+                                          if plan != "free" else "Volviste al plan Free.")
+    except Exception as error:
+        st.session_state["aviso_plan"] = f"No se pudo cambiar el plan: {error}"
+
+
+def pagina_planes(usuario: dict) -> None:
+    st.markdown('<div class="bs-hero"><h1>Planes</h1>'
+                '<p>Verifica tu cuenta y destaca en BeatStorage. Cada plan dura 30 días.</p></div>',
+                unsafe_allow_html=True)
+    if not CON_PLANES:
+        st.warning("No se pudieron crear las columnas de planes en la base de datos. "
+                   "Revisa que db.py tenga una función para escribir (por ejemplo db.ejecutar).")
+        return
+    if aviso := st.session_state.pop("aviso_plan", None):
+        st.toast(aviso, icon=":material/workspace_premium:")
+
+    actual = plan_activo(usuario) or "free"
+    inicial = esc((usuario["nombre_publico"] or usuario["username"])[:1].upper())
+    st.write("")
+    columnas = st.columns(3, gap="medium")
+    for col, (clave, plan) in zip(columnas, PLANES.items()):
+        ejemplo = {"plan": clave, "plan_vence": "9999-12-31"}
+        nombre = plan["nombre"] + marca_html(ejemplo)
+        precio = (f'{clp(plan["precio"])}<small>CLP al mes</small>' if plan["precio"]
+                  else '$0<small>siempre</small>')
+        with col, st.container(border=True, key=f"plan_{clave}"):
+            st.markdown(
+                f'<div class="bs-plan"><div class="av{aura_clase(ejemplo)}">'
+                f'<div class="foto" style="{tinte(usuario["username"])}">{inicial}</div></div>'
+                f'<div class="nom">{nombre}</div><div class="para">{plan["para"]}</div>'
+                f'<div class="precio">{precio}</div>'
+                '<ul>' + "".join(f"<li>{x}</li>" for x in plan["incluye"]) + '</ul></div>',
+                unsafe_allow_html=True)
+            if clave == actual:
+                st.button("Tu plan actual", key=f"plan_actual_{clave}", width="stretch", disabled=True)
+                if clave != "free":
+                    st.markdown(f'<div class="bs-plan"><div class="vence">Vence el '
+                                f'{esc(str(usuario.get("plan_vence")))}</div></div>', unsafe_allow_html=True)
+                    st.button("Cancelar plan", key="plan_cancelar", type="tertiary", width="stretch",
+                              on_click=_elegir_plan, args=(usuario["id"], "free"))
+            elif clave == "free":
+                st.button("Pasar a Free", key="plan_free", width="stretch",
+                          on_click=_elegir_plan, args=(usuario["id"], "free"))
+            else:
+                with st.popover("Elegir plan", width="stretch", type="primary"):
+                    st.markdown(f"**{plan['nombre']}**: {clp(plan['precio'])} CLP por {DIAS_PLAN} días.")
+                    if clave == "productor" and usuario["rol"] == "cliente":
+                        st.caption("Tu cuenta pasará a ser de productor para que puedas vender.")
+                    st.caption("Pago de prueba: por ahora no se cobra dinero real.")
+                    st.button("Confirmar pago", key=f"plan_pagar_{clave}", type="primary", width="stretch",
+                              on_click=_elegir_plan, args=(usuario["id"], clave))
+
+
+# ----------------------------------------------------------------------------
 # 9. Páginas y navegación lateral con botones
 # ----------------------------------------------------------------------------
 PAGINAS = {
@@ -960,6 +1127,7 @@ PAGINAS = {
     "voz":          (":material/mic:", "Fix my Vocal", servicios.render),
     "tablon":       (":material/assignment:", "Encargos", licitaciones.render),
     "productores":  (":material/headphones:", "Productores", vista_productores),
+    "planes":       (":material/workspace_premium:", "Planes", pagina_planes),
     "panel":        (":material/space_dashboard:", "Mi panel", panel.render),
     "verificacion": (":material/verified_user:", "Verificación", onboarding.render),
     "admin":        (":material/admin_panel_settings:", "Administración", admin.render),
@@ -972,7 +1140,7 @@ def paginas_para(usuario: dict | None) -> list[str]:
         return base
     if usuario["rol"] == "admin":
         return base + ["admin"]
-    return base + ["panel"] + (["verificacion"] if usuario["rol"] == "productor" else [])
+    return base + ["planes", "panel"] + (["verificacion"] if usuario["rol"] == "productor" else [])
 
 
 def navegar(pagina: str) -> None:
