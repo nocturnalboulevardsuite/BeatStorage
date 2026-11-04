@@ -4,9 +4,14 @@ app.py — Punto de entrada de BeatStorage LATAM.
 Ejecutar:  streamlit run app.py
 
 Este archivo concentra la capa visual principal de la versión 6:
-  · Estética minimalista con luz RGBIC: la interfaz es neutra y el color solo
-    aparece como luz de tira LED (tira superior, menú activo, pista que suena,
-    portada del perfil y progreso del registro).
+  · Estética minimalista en rojo, con luz RGBIC en rojos, naranjos y morados
+    (tira superior, menú activo, pista que suena, portada del perfil y registro).
+  · Logo: una B roja cuyos huecos son dos parlantes negros que vibran.
+  · Verificación: productores con marca roja y aura naranja; usuarios con marca
+    morada y aura roja.
+  · Sin sesión solo se ve la portada (logo, entrar o registrarse y qué es
+    BeatStorage); al iniciar sesión aparecen todas las vistas.
+  · Las ondas en reposo se mueven como si la pista estuviera sonando.
 Novedades de la versión 5 que se mantienen:
   · Logo nuevo (una "b" formada por un mástil y un disco de vinilo).
   · Navegación lateral con botones (más cómoda que los radio buttons).
@@ -82,7 +87,34 @@ styles.inyectar_css()
 #    productor se enciende un aro alrededor de su foto.
 #    Si el sistema pide "reducir movimiento", la luz se queda quieta.
 # ----------------------------------------------------------------------------
-LED = ["#FF3D7F", "#FF8A3D", "#FFC83D", "#2EE6A6", "#3DB8FF", "#8C5CFF"]
+# Luz RGBIC en rojos, naranjos y morados (sin rosados).
+LED = ["#FF1E2D", "#FF6A00", "#FFA21A", "#E3122B", "#9D2BFF", "#6A1FD1"]
+ROJO = "#E5252F"            # color principal de la marca (reemplaza al rosado)
+# Verificación: productores con marca roja y aura naranja; usuarios con marca morada y aura roja.
+MARCA = {"productor": "#E5252F", "usuario": "#8E2BD9"}
+AURA = {"productor": ["#FF3300", "#FF8C00", "#FFC400", "#FF6A00", "#FF2200"],
+        "usuario":   ["#FF1E2D", "#8B0015", "#FF5A4D", "#D4002A", "#FF1E2D"]}
+
+
+def _tema_oscuro(pal: dict) -> bool:
+    """True si el tema activo es oscuro (se deduce de los colores de styles.paleta())."""
+    def luz(color: str) -> float | None:
+        h = str(color or "").strip().lstrip("#")
+        if len(h) == 3:
+            h = "".join(c * 2 for c in h)
+        if len(h) < 6:
+            return None
+        try:
+            r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        except ValueError:
+            return None
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    fondo, texto = luz(pal.get("fondo")), luz(pal.get("texto"))
+    if fondo is not None:
+        return fondo < 0.5
+    if texto is not None:
+        return texto > 0.5
+    return True
 CICLO_LED = 2.4  # segundos que tarda un color en recorrer todo el espectro
 
 
@@ -102,7 +134,12 @@ def retraso(i: int, total: int, ciclo: float, vueltas: float = 1.0) -> str:
 
 _CSS = """
 <style>
+:root, .stApp {
+  __ROJOS__
+}
 :root {
+  --aura-productor: __AURA_P__;
+  --aura-usuario: __AURA_U__;
   __VARS__
   --espectro:   linear-gradient(90deg,  __DOBLE__);
   --espectro-v: linear-gradient(180deg, __DOBLE__);
@@ -144,7 +181,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 [class*="st-key-nav_"] button * { justify-content: flex-start; }
 [class*="st-key-nav_"] button:hover { background: var(--bs-sup2); color: var(--bs-texto); }
 [class*="st-key-nav_"] button[kind="primary"],
-[class*="st-key-nav_"] button[kind="primary"]:hover { background: var(--bs-sup2); color: var(--bs-texto); font-weight: 600; }
+[class*="st-key-nav_"] button[kind="primary"]:hover { background: var(--bs-sup2) !important; color: var(--bs-texto) !important;
+  border: none !important; font-weight: 600; }
 [class*="st-key-nav_"] button[kind="primary"]::before {
   content: ""; position: absolute; left: 5px; top: 26%; bottom: 26%; width: 3px; border-radius: 3px;
   background: var(--espectro-v); background-size: 100% 200%; animation: bs-fluir-v 5s linear infinite;
@@ -229,17 +267,92 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: var(--bs-b
 .bs-separador::before, .bs-separador::after { content: ""; flex: 1; height: 1px; background: var(--bs-borde); }
 [class*="st-key-rol_"] button { min-height: 76px; border-radius: 16px !important; }
 
+
+/* ---------- Rojo en los controles de Streamlit (antes rosados) ---------- */
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"],
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {
+  background-color: var(--bs-acento) !important; border-color: var(--bs-acento) !important; color: #fff !important; }
+.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover,
+[data-testid="stBaseButton-primary"]:hover, [data-testid="stBaseButton-primaryFormSubmit"]:hover {
+  background-color: color-mix(in srgb, var(--bs-acento) 86%, #fff) !important; }
+[data-testid="stBaseButton-segmented_controlActive"] { color: var(--bs-acento-t) !important;
+  border-color: var(--bs-acento) !important; background: var(--bs-acento-s) !important; }
+.stApp a { color: var(--bs-acento-t); }
+
+/* ---------- Logo: una B con dos parlantes que vibran ---------- */
+.bs-b { overflow: visible; animation: bs-temblor .5s linear infinite; }
+.bs-b .cono { transform-box: fill-box; transform-origin: center; }
+.bs-b .grave .cono { animation: bs-golpe .5s cubic-bezier(.2,.9,.3,1) infinite; }
+.bs-b .agudo .cono { animation: bs-agudo .25s ease-in-out infinite; }
+@keyframes bs-golpe { 0% { transform: scale(1); } 10% { transform: scale(1.14); } 26% { transform: scale(.95); }
+  45%, 100% { transform: scale(1); } }
+@keyframes bs-agudo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes bs-temblor { 0%, 30%, 100% { transform: translate(0, 0); } 8% { transform: translate(.25px, -.3px) rotate(-.5deg); }
+  16% { transform: translate(-.25px, .2px) rotate(.4deg); } }
+
+/* ---------- Marcas de verificación y auras ---------- */
+.bs-marca { display: inline-block; width: .95em; height: .95em; vertical-align: -.1em; margin-left: .3em; flex: none; }
+.bs-aura { position: relative; isolation: isolate; border-radius: 50%; }
+.bs-aura::before, .bs-aura::after { content: ""; position: absolute; border-radius: 50%; z-index: -1;
+  background: conic-gradient(from 0deg, var(--aura)); animation: bs-girar 3s linear infinite; }
+.bs-aura::before { inset: -4px; }
+.bs-aura::after { inset: -8px; filter: blur(12px); opacity: .7; }
+.bs-aura.productor { --aura: var(--aura-productor); }
+.bs-aura.usuario { --aura: var(--aura-usuario); }
+.bs-artista .aro.bs-aura::before { background: conic-gradient(from 0deg, var(--aura)); opacity: 1;
+  animation-play-state: running; }
+.bs-cabecera > .bs-av { flex: none; border-radius: 50%; }
+.bs-cuenta .bs-aura { display: inline-flex; flex: none; }
+.bs-cuenta .bs-aura::before { inset: -3px; }
+.bs-cuenta .bs-aura::after { inset: -5px; filter: blur(7px); }
+
+/* ---------- Onda en reposo: se mueve como si estuviera sonando ---------- */
+.bs-onda-viva rect { transform-box: fill-box; transform-origin: center;
+  animation: bs-vibra .8s ease-in-out infinite alternate; }
+@keyframes bs-vibra { from { transform: scaleY(1); } to { transform: scaleY(.4); } }
+.bs-portada .barras span { transform-origin: bottom;
+  animation: bs-rgbic 9s linear infinite, bs-vibra-baja 1s ease-in-out infinite alternate; }
+@keyframes bs-vibra-baja { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
+
+/* ---------- Portada de inicio (sin sesión) ---------- */
+.bs-portal { text-align: center; padding: 8vh 0 1.4rem; }
+.bs-portal svg { width: 128px; height: 128px; filter: drop-shadow(0 12px 32px rgba(229, 37, 47, .35)); }
+.bs-portal .marca { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.05em;
+  font-size: clamp(2.3rem, 6vw, 3.4rem); line-height: 1; margin-top: 1.2rem; color: var(--bs-texto); }
+.bs-portal .marca span { font-family: 'Instrument Sans', sans-serif; font-weight: 500; font-size: .36em;
+  letter-spacing: 0; color: var(--bs-tenue); margin-left: .45em; }
+.bs-portal p { color: var(--bs-tenue); max-width: 34ch; margin: .8rem auto 0; line-height: 1.5; font-size: 1.02rem; }
+.bs-que { max-width: 840px; margin: 12vh auto 3rem; padding-top: 2.4rem; border-top: 1px solid var(--bs-borde); }
+.bs-que .titulo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.04em;
+  font-size: clamp(1.6rem, 3.6vw, 2.2rem); line-height: 1.1; color: var(--bs-texto); }
+.bs-que .intro { color: var(--bs-tenue); max-width: 60ch; line-height: 1.6; margin: .8rem 0 0; }
+.bs-que .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 2.2rem; }
+.bs-que .tres svg { width: 22px; height: 22px; color: var(--bs-acento-t); }
+.bs-que .tres b { display: block; margin: .5rem 0 .3rem; font-size: 1rem; color: var(--bs-texto); }
+.bs-que .tres p { color: var(--bs-tenue); font-size: .9rem; line-height: 1.55; margin: 0; }
+.bs-que .leyenda { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 2.4rem; color: var(--bs-tenue); font-size: .86rem; }
+.bs-que .leyenda span { display: inline-flex; align-items: center; gap: 2px; }
+@media (max-width: 720px) { .bs-que .tres { grid-template-columns: 1fr; gap: 22px; } }
+
 /* ---------- Reducir movimiento: la luz se queda quieta ---------- */
 @media (prefers-reduced-motion: reduce) {
   .bs-tira, .bs-tira::after, .bs-progreso div, .bs-portada .barras span, .bs-cover.on,
-  .bs-artista .aro::before, [class*="st-key-nav_"] button[kind="primary"]::before {
+  .bs-artista .aro::before, [class*="st-key-nav_"] button[kind="primary"]::before,
+  .bs-b, .bs-b .cono, .bs-aura::before, .bs-aura::after, .bs-onda-viva rect {
     animation-play-state: paused !important; }
 }
 </style>
 <div class="bs-tira" aria-hidden="true"></div>
 """
 
+_OSCURO = _tema_oscuro(styles.paleta())
+_ROJOS = (f"--bs-acento: {ROJO} !important; "
+          f"--bs-acento-t: {'#FF5A5F' if _OSCURO else '#C4161F'} !important; "
+          f"--bs-acento-s: {'rgba(229,37,47,.16)' if _OSCURO else 'rgba(229,37,47,.10)'} !important;")
 st.markdown(_CSS
+            .replace("__ROJOS__", _ROJOS)
+            .replace("__AURA_P__", ", ".join(AURA["productor"] + AURA["productor"][:1]))
+            .replace("__AURA_U__", ", ".join(AURA["usuario"] + AURA["usuario"][:1]))
             .replace("__VARS__", " ".join(f"--led-{i + 1}: {c};" for i, c in enumerate(LED)))
             .replace("__DOBLE__", ", ".join(LED + LED + LED[:1]))
             .replace("__UNO__", ", ".join(LED + LED[:1]))
@@ -252,16 +365,23 @@ st.markdown(_CSS
 #    (beat + almacenamiento de música). El hueco del disco es transparente.
 # ----------------------------------------------------------------------------
 def logo_svg(uid: str = "l") -> str:
-    return f"""<svg viewBox="0 0 40 40" role="img" aria-label="BeatStorage LATAM">
-  <mask id="bsm-{uid}">
-    <rect width="40" height="40" fill="#fff"/>
-    <circle cx="21" cy="25" r="8" fill="none" stroke="#000" stroke-opacity=".4" stroke-width="1.1"/>
-    <circle cx="21" cy="25" r="2.8" fill="#000"/>
-  </mask>
-  <g mask="url(#bsm-{uid})" fill="var(--bs-texto)">
-    <rect x="6" y="3" width="7" height="34" rx="3.5"/>
-    <circle cx="21" cy="25" r="12"/>
+    """Una B roja cuyos dos huecos son parlantes negros; los conos vibran como si sonara algo."""
+    def parlante(clase: str, cx: float, cy: float, borde: float, cono: float, tapa: float) -> str:
+        return (f'<g class="{clase}"><circle cx="{cx}" cy="{cy}" r="{borde}" fill="#0a0a0a"/>'
+                f'<g class="cono"><circle cx="{cx}" cy="{cy}" r="{cono}" fill="url(#bsc-{uid})" '
+                f'stroke="{ROJO}" stroke-width=".55"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{cono * .62:.2f}" fill="none" stroke="#2a2a2a" stroke-width=".4"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{tapa}" fill="{ROJO}"/></g></g>')
+    return f"""<svg class="bs-b" viewBox="0 0 40 40" role="img" aria-label="BeatStorage LATAM">
+  <defs><radialGradient id="bsc-{uid}" cx="45%" cy="40%" r="65%">
+    <stop offset="0" stop-color="#3b3b3b"/><stop offset=".55" stop-color="#141414"/><stop offset="1" stop-color="#000"/>
+  </radialGradient></defs>
+  <g fill="{ROJO}">
+    <rect x="5" y="3" width="14" height="18.4" rx="3"/><circle cx="19" cy="12.2" r="9.2"/>
+    <rect x="5" y="17" width="16" height="20" rx="3"/><circle cx="21" cy="27.4" r="9.6"/>
   </g>
+  {parlante("agudo", 19, 12.2, 6, 4.7, 1.6)}
+  {parlante("grave", 21, 27.4, 7.2, 5.7, 2.1)}
 </svg>"""
 
 
@@ -277,6 +397,34 @@ def tinte(texto: str) -> str:
     """Fondo suave y estable por nombre, teñido con uno de los colores LED."""
     n = int(hashlib.md5(texto.encode()).hexdigest()[:2], 16) % len(LED) + 1
     return f"background:color-mix(in srgb, var(--led-{n}) 28%, var(--bs-sup2))"
+
+
+def _tipo(u: dict) -> str | None:
+    """'productor' o 'usuario' si la cuenta está verificada; None si no lo está."""
+    if not (u.get("verificado") if hasattr(u, "get") else u["verificado"]):
+        return None
+    return "productor" if u["rol"] == "productor" else "usuario"
+
+
+def marca_html(u: dict) -> str:
+    """Marca de verificación: roja para productores, morada para el resto de usuarios."""
+    tipo = _tipo(u)
+    if not tipo:
+        return ""
+    import math
+    puntas = " ".join(f"{12 + (10 if k % 2 == 0 else 8.4) * math.cos(k * math.pi / 8):.2f},"
+                      f"{12 + (10 if k % 2 == 0 else 8.4) * math.sin(k * math.pi / 8):.2f}" for k in range(16))
+    texto = "Productor verificado" if tipo == "productor" else "Usuario verificado"
+    return (f'<svg class="bs-marca" viewBox="0 0 24 24" role="img" aria-label="{texto}"><title>{texto}</title>'
+            f'<polygon points="{puntas}" fill="{MARCA[tipo]}" stroke="{MARCA[tipo]}" stroke-width="1.6" '
+            f'stroke-linejoin="round"/><path d="M7.6 12.4l3 3 5.9-6.2" fill="none" stroke="#fff" '
+            f'stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+
+def aura_clase(u: dict) -> str:
+    """Clases para el aura giratoria alrededor de la foto de una cuenta verificada."""
+    tipo = _tipo(u)
+    return f" bs-aura {tipo}" if tipo else ""
 
 
 def foto_html(u: dict) -> str:
@@ -295,26 +443,6 @@ def compacto(n: int | float | None) -> str:
         return str(n)
     return f"{n / 1000:.1f}".replace(".", ",").replace(",0", "") + " mil"
 
-
-def _tema_oscuro(pal: dict) -> bool:
-    """True si el tema activo es oscuro (se deduce de los colores de styles.paleta())."""
-    def luz(color: str) -> float | None:
-        h = str(color or "").strip().lstrip("#")
-        if len(h) == 3:
-            h = "".join(c * 2 for c in h)
-        if len(h) < 6:
-            return None
-        try:
-            r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
-        except ValueError:
-            return None
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b
-    fondo, texto = luz(pal.get("fondo")), luz(pal.get("texto"))
-    if fondo is not None:
-        return fondo < 0.5
-    if texto is not None:
-        return texto > 0.5
-    return True
 
 
 # ----------------------------------------------------------------------------
@@ -342,11 +470,16 @@ def picos_de(ruta: str | None) -> list[float]:
 
 
 def onda_fija(valores: list[float]) -> str:
+    """Onda en reposo: cada barra sube y baja a su ritmo, como si la pista estuviera sonando."""
     ancho = len(valores) * 4
-    barras = "".join(f'<rect x="{i * 4}" y="{(36 - v * 34) / 2:.1f}" width="2.4" height="{v * 34:.1f}" rx="1.2"/>'
-                     for i, v in enumerate(valores))
-    return (f'<div class="bs-onda-fija"><svg viewBox="0 0 {ancho} 36" preserveAspectRatio="none" '
-            f'fill="var(--bs-tenue)" fill-opacity=".35" aria-hidden="true">{barras}</svg></div>')
+    barras = []
+    for i, v in enumerate(valores):
+        duracion = 0.42 + ((i * 37) % 11) / 16          # ritmos distintos, siempre los mismos
+        desfase = i * 0.045 + ((i * 53) % 17) / 40      # la energía recorre la onda de izquierda a derecha
+        barras.append(f'<rect x="{i * 4}" y="{(36 - v * 34) / 2:.1f}" width="2.6" height="{v * 34:.1f}" rx="1.3" '
+                      f'style="animation-duration:{duracion:.2f}s;animation-delay:-{desfase:.2f}s"/>')
+    return (f'<div class="bs-onda-fija bs-onda-viva"><svg viewBox="0 0 {ancho} 36" preserveAspectRatio="none" '
+            f'fill="var(--bs-acento)" fill-opacity=".9" aria-hidden="true">{"".join(barras)}</svg></div>')
 
 
 # Reproductor: mientras suena, la parte ya escuchada de la onda se ilumina como una
@@ -538,8 +671,8 @@ def vista_productores(usuario: dict | None) -> None:
         with columnas[i % 4]:
             with st.container(key=f"artista_{a['id']}"):
                 st.markdown(
-                    f'<div class="bs-artista"><div class="aro"><div class="foto" style="{tinte(a["username"])}">'
-                    f'{foto_html(a)}</div></div><b>{esc(a["nombre_publico"] or a["username"])}</b>'
+                    f'<div class="bs-artista"><div class="aro{aura_clase(a)}"><div class="foto" style="{tinte(a["username"])}">'
+                    f'{foto_html(a)}</div></div><b>{esc(a["nombre_publico"] or a["username"])}{marca_html(a)}</b>'
                     f'<small>{esc(a["pais"] or "LATAM")}</small>'
                     f'<small>{a["pistas"]} pistas, {compacto(a["plays"])} reproducciones</small></div>',
                     unsafe_allow_html=True)
@@ -575,8 +708,8 @@ def perfil_productor(pid: int, usuario: dict | None) -> None:
                      for i, v in enumerate(alturas))
     st.markdown(
         f'<div class="bs-portada" aria-hidden="true"><div class="barras">{barras}</div></div>'
-        f'<div class="bs-cabecera"><div class="foto" style="{tinte(p["username"])}">'
-        f'{foto_html(p)}</div><div><h1>{esc(p["nombre_publico"] or p["username"])}</h1>'
+        f'<div class="bs-cabecera"><div class="bs-av{aura_clase(p)}"><div class="foto" style="{tinte(p["username"])}">'
+        f'{foto_html(p)}</div></div><div><h1>{esc(p["nombre_publico"] or p["username"])}{marca_html(p)}</h1>'
         f'<div class="lugar">@{esc(p["username"])} {icono("pin")} {esc(p["pais"] or "LATAM")} '
         f'{insignias(p, con_ia=bool(ob and ob["usa_ia"]))}</div></div></div>',
         unsafe_allow_html=True)
@@ -692,6 +825,8 @@ def pagina_registro() -> None:
 
         # ---- Paso 1: correo ----
         if paso == 1:
+            st.button("Inicio", icon=":material/arrow_back:", key="reg_portal", type="tertiary",
+                      on_click=abrir_acceso, args=(None,))
             _cabecera_acceso("Regístrate para empezar a escuchar")
             with st.form("reg_1", border=False):
                 email = st.text_input("Correo electrónico", value=datos.get("email", ""),
@@ -766,6 +901,8 @@ def pagina_registro() -> None:
 def pagina_login() -> None:
     _, centro, _ = st.columns([1, 1.2, 1])
     with centro:
+        st.button("Inicio", icon=":material/arrow_back:", key="login_portal", type="tertiary",
+                  on_click=abrir_acceso, args=(None,))
         _cabecera_acceso("Inicia sesión en BeatStorage")
         with st.form("login", border=False):
             u = st.text_input("Correo o nombre de usuario")
@@ -825,43 +962,89 @@ def bloque_usuario(usuario: dict) -> None:
         avisos += (f'<div class="bs-nota" style="color:var(--bs-peligro)">{icono("alerta")} '
                    'Cuenta en revisión</div>')
     st.markdown(
-        f'<div class="bs-cuenta"><div class="bs-cuenta-avatar">{esc(nombre[:1].upper())}</div>'
-        f'<div class="bs-cuenta-datos"><b>{nombre}</b><small>@{esc(usuario["username"])}</small></div></div>'
+        f'<div class="bs-cuenta"><span class="{aura_clase(usuario).strip()}">'
+        f'<div class="bs-cuenta-avatar">{esc(nombre[:1].upper())}</div></span>'
+        f'<div class="bs-cuenta-datos"><b>{nombre}{marca_html(usuario)}</b><small>@{esc(usuario["username"])}</small></div></div>'
         f'<div class="bs-cuenta-extra">{insignias(usuario)}{avisos}</div>', unsafe_allow_html=True)
 
 
+_SVG_ITEMS = {
+    "escuchar": '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/>'
+                '<rect x="17" y="14" width="4" height="6" rx="1.5"/>',
+    "encargo": '<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
+    "vender": '<path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+}
+
+
+def _item(clave: str, titulo: str, texto: str) -> str:
+    return (f'<div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
+            f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{_SVG_ITEMS[clave]}</svg>'
+            f'<b>{titulo}</b><p>{texto}</p></div>')
+
+
+def pagina_inicio() -> None:
+    """Primera pantalla sin sesión: el logo, las dos entradas y qué es BeatStorage."""
+    _, centro, _ = st.columns([1, 1.5, 1])
+    with centro:
+        st.markdown(f'<div class="bs-portal">{logo_svg("portal")}'
+                    '<div class="marca">beatstorage<span>latam</span></div>'
+                    '<p>Beats de productores latinoamericanos, listos para tu próxima canción.</p></div>',
+                    unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        c1.button("Iniciar sesión", type="primary", width="stretch", key="portal_login",
+                  on_click=abrir_acceso, args=("login",))
+        c2.button("Registrarse", width="stretch", key="portal_registro",
+                  on_click=abrir_acceso, args=("registro",))
+
+    ejemplo_p = {"verificado": 1, "rol": "productor"}
+    ejemplo_u = {"verificado": 1, "rol": "cliente"}
+    st.markdown(
+        '<div class="bs-que"><div class="titulo">¿Qué es BeatStorage?</div>'
+        '<p class="intro">Un mercado de música hecho en Latinoamérica. Productores de toda la región suben sus '
+        'beats; tú los escuchas, compras la licencia y hablas directo con quien los hizo.</p>'
+        '<div class="tres">'
+        + _item("escuchar", "Escucha y compra",
+                "Preescucha cada beat y compra su licencia. Recibes el archivo original cuando se confirma el pago.")
+        + _item("encargo", "Encarga a medida",
+                "Pide un beat personalizado, publica un encargo o usa Fix my Vocal para tu voz grabada.")
+        + _item("vender", "Vende tu música",
+                "Si produces, demuestra tu autoría, sube 10 beats y aparece en el catálogo con tu perfil.")
+        + '</div><div class="leyenda">'
+        f'<span>{marca_html(ejemplo_p)}&nbsp;Productor verificado</span>'
+        f'<span>{marca_html(ejemplo_u)}&nbsp;Usuario verificado</span>'
+        '</div></div>', unsafe_allow_html=True)
+
+
 usuario = auth.usuario_actual()
+
+# Sin sesión solo se ve la portada (o el login / registro); el resto de vistas pide iniciar sesión.
+if not usuario:
+    acceso = st.session_state.get("acceso")
+    if acceso == "registro":
+        pagina_registro()
+    elif acceso == "login":
+        pagina_login()
+    else:
+        pagina_inicio()
+    st.stop()
+
 opciones = paginas_para(usuario)
 if st.session_state.get("nav") not in opciones:
     st.session_state["nav"] = opciones[0]
-acceso = None if usuario else st.session_state.get("acceso")
 
 with st.sidebar:
     logo()
     for pid in opciones:
         ico, nombre, _ = PAGINAS[pid]
-        activa = pid == st.session_state["nav"] and not acceso
+        activa = pid == st.session_state["nav"]
         st.button(nombre, key=f"nav_{pid}", icon=ico, width="stretch",
                   type="primary" if activa else "tertiary", on_click=navegar, args=(pid,))
     st.divider()
-    if usuario:
-        bloque_usuario(usuario)
-        st.button("Cerrar sesión", icon=":material/logout:", type="tertiary", key="salir",
-                  on_click=auth.cerrar_sesion)
-    else:
-        st.markdown('<p class="bs-lateral-texto">Compra beats, encarga producciones '
-                    'o vende tu música.</p>', unsafe_allow_html=True)
-        st.button("Registrarte", type="primary", width="stretch", key="cta_registro",
-                  on_click=abrir_acceso, args=("registro",))
-        st.button("Iniciar sesión", width="stretch", key="cta_login",
-                  on_click=abrir_acceso, args=("login",))
+    bloque_usuario(usuario)
+    st.button("Cerrar sesión", icon=":material/logout:", type="tertiary", key="salir",
+              on_click=auth.cerrar_sesion)
 
 # ----------------------------------------------------------------------------
 # 10. Vista seleccionada
 # ----------------------------------------------------------------------------
-if acceso == "registro":
-    pagina_registro()
-elif acceso == "login":
-    pagina_login()
-else:
-    PAGINAS[st.session_state["nav"]][2](usuario)
+PAGINAS[st.session_state["nav"]][2](usuario)
